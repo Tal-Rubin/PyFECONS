@@ -6,6 +6,7 @@ from pyfecons.inputs.blanket import Blanket
 from pyfecons.inputs.coils import Coils
 from pyfecons.inputs.customer_info import CustomerInfo
 from pyfecons.inputs.direct_energy_converter import DirectEnergyConverter
+from pyfecons.inputs.financial import Financial
 from pyfecons.inputs.fuel_handling import FuelHandling
 from pyfecons.inputs.installation import Installation
 from pyfecons.inputs.lsa_levels import LsaLevels
@@ -265,5 +266,6 @@ def Generate() -> AllInputs:
         ),
         installation=Installation(labor_rate=USD(1600)),
         fuel_handling=FuelHandling(learning_curve_credit=Ratio(0.8)),
+        financial=Financial(interest_rate=Ratio(0.07)),
         npv_input=NpvInput(discount_rate=Percent(0.08)),
     )
