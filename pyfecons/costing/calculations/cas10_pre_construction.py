@@ -7,29 +7,16 @@ from pyfecons.costing.categories.cas100000 import CAS10
 from pyfecons.costing.safety.licensing import licensing_safety_addon
 from pyfecons.enums import Region
 from pyfecons.inputs.basic import Basic
+from pyfecons.inputs.costing_constants import CostingConstants
 from pyfecons.inputs.tritium_release import TritiumRelease
 from pyfecons.units import M_USD
-
-# Calibration constants for CAS10 land cost model (see CAS100000.tex, 2022 update)
-# These scale neutron and fusion power so that the land cost matches the
-# 400 acre, $10k/acre reference plant example.
-LAND_COST_POWER_NORMALIZATION_MW = 239.0
-LAND_COST_SCALING_FACTOR = 0.9
-
-# Land valuation used for tritium-driven site boundary sizing (USDA 2022
-# farm real estate values, see safety analysis notes).
-US_FARM_REAL_ESTATE_VALUE_USD_PER_ACRE = 3800.0
-
-# Fraction of total tritium inventory assumed to reach the stack during
-# the bounding release scenario (see Lukacs & Williams 2020 analysis).
-STACK_RELEASE_FRACTION = 0.10
 
 # Conversion from square meters to acres.
 M2_TO_ACRES = 0.000247105
 
 
 def _compute_tritium_land_addon(
-    basic: Basic, tritium: TritiumRelease | None, baseline_land_cost: M_USD
+    basic: Basic, tritium: TritiumRelease | None, baseline_land_cost: M_USD, constants: CostingConstants
 ) -> M_USD:
     """
     Safety-driven land / tritium release mitigation add-on (C110200).
@@ -96,7 +83,7 @@ def _compute_tritium_land_addon(
 
     # Effective dust inventory reaching the stack in the bounding release.
     dust_inv_stack_g = (
-        tritium.dust_tritium_inventory_g_per_month * STACK_RELEASE_FRACTION
+        tritium.dust_tritium_inventory_g_per_month * constants.stack_release_fraction
     )
 
     site_boundary_m = float(dust_to_distance(dust_inv_stack_g))
@@ -104,7 +91,7 @@ def _compute_tritium_land_addon(
 
     site_area_m2 = math.pi * site_boundary_m**2
     site_area_acres = site_area_m2 * M2_TO_ACRES
-    site_cost_usd = site_area_acres * US_FARM_REAL_ESTATE_VALUE_USD_PER_ACRE
+    site_cost_usd = site_area_acres * constants.us_farm_real_estate_value_usd_per_acre
     site_cost_musd = site_cost_usd / 1e6
 
     total_hazard_driven_land_cost = M_USD(site_cost_musd)
@@ -112,7 +99,7 @@ def _compute_tritium_land_addon(
 
 
 def cas_10_pre_construction_costs(
-    basic: Basic, power_table: PowerTable, tritium: TritiumRelease | None
+    basic: Basic, power_table: PowerTable, tritium: TritiumRelease | None, constants: CostingConstants
 ) -> CAS10:
     # Cost Category 10: Pre-construction Costs
     cas10 = CAS10()
@@ -122,43 +109,42 @@ def cas_10_pre_construction_costs(
         math.sqrt(basic.n_mod)
         * (
             power_table.p_neutron
-            / LAND_COST_POWER_NORMALIZATION_MW
-            * LAND_COST_SCALING_FACTOR
-            + basic.p_nrl / LAND_COST_POWER_NORMALIZATION_MW * LAND_COST_SCALING_FACTOR
+            / constants.land_cost_power_normalization_mw
+            * constants.land_cost_scaling_factor
+            + basic.p_nrl / constants.land_cost_power_normalization_mw * constants.land_cost_scaling_factor
         )
     )
     # Safety-driven land / tritium release mitigation add-on
-    cas10.C110200 = _compute_tritium_land_addon(basic, tritium, cas10.C110100)
+    cas10.C110200 = _compute_tritium_land_addon(basic, tritium, cas10.C110100, constants)
     cas10.C110000 = cas10.C110100 + cas10.C110200
 
     # Cost Category 12 – Site Permits
-    cas10.C120000 = M_USD(10)
+    cas10.C120000 = constants.site_permits
 
     # Cost Category 13 – Plant Licensing
     # Base cost from 'Capital Costs' section of
     # https://world-nuclear.org/information-library/economic-aspects/economics-of-nuclear-power.aspx
-    base_licensing_cost = M_USD(210)
     # Safety and hazard mitigation addon (region-dependent, applied when enabled)
-    cas10.C130000 = base_licensing_cost + licensing_safety_addon(basic)
+    cas10.C130000 = constants.licensing + licensing_safety_addon(basic)
 
     # Cost Category 14 – Plant Permits
-    cas10.C140000 = M_USD(5)
+    cas10.C140000 = constants.plant_permits
 
     # Cost Category 15 – Plant Studies
-    cas10.C150000 = M_USD(5)
+    cas10.C150000 = constants.plant_studies
 
     # Cost Category 16 – Plant Reports
-    cas10.C160000 = M_USD(2)
+    cas10.C160000 = constants.plant_reports
 
     # Cost Category 17 – Other Pre-Construction Costs
-    cas10.C170000 = M_USD(1)
+    cas10.C170000 = constants.other_pre_construction
 
     # Cost Category 19 - Contingency
     if basic.noak:
         cas10.C190000 = M_USD(0)
     else:
         cas10.C190000 = M_USD(
-            0.1
+            constants.contingency_rate
             * (
                 cas10.C110000
                 + cas10.C120000

@@ -1,14 +1,15 @@
 from pyfecons.costing.categories.cas290000 import CAS29
 from pyfecons.inputs.basic import Basic
+from pyfecons.inputs.costing_constants import CostingConstants
 from pyfecons.units import M_USD
 
 
-def cas29_contingency_costs(basic: Basic, cas2x_total_cost: M_USD) -> CAS29:
+def cas29_contingency_costs(basic: Basic, cas2x_total_cost: M_USD, constants: CostingConstants) -> CAS29:
     # Cost Category 29 Contingency
     cas29 = CAS29()
     if basic.noak:
         cas29.C290000 = M_USD(0)
     else:
         # TODO what is the 0.1? Should it be an input?
-        cas29.C290000 = M_USD(0.1 * cas2x_total_cost)
+        cas29.C290000 = M_USD(constants.contingency_rate * cas2x_total_cost)
     return cas29

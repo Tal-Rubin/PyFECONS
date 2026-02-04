@@ -2,6 +2,7 @@ from pyfecons.costing.accounting.power_table import PowerTable
 from pyfecons.costing.categories.cas200000 import CAS20
 from pyfecons.costing.categories.cas600000 import CAS60
 from pyfecons.inputs.basic import Basic
+from pyfecons.inputs.costing_constants import CostingConstants
 from pyfecons.inputs.financial import Financial
 from pyfecons.inputs.lsa_levels import LsaLevels
 from pyfecons.units import M_USD
@@ -13,6 +14,7 @@ def cas60_capitalized_financial_costs(
     lsa_levels: LsaLevels,
     power_table: PowerTable,
     cas20: CAS20,
+    constants: CostingConstants,
 ) -> CAS60:
     # Cost Category 60 Capitalized Financial Costs (CFC)
     cas60 = CAS60()
@@ -40,7 +42,7 @@ def cas60_capitalized_financial_costs(
 
     # C_97_sens = costfac90 * (C_90 + C_96 + C_94 + C_93 + C_92 + C_91);
     # (/1e6)/A_power * A_C_97; %Interest during Construction (IDC)  Table 3.2-X of Ref. [1]
-    cas60.C630000 = M_USD(power_table.p_net * 0.099 * basic.construction_time)
+    cas60.C630000 = M_USD(power_table.p_net * constants.idc_coeff * basic.construction_time)
 
     cas60.C600000 = M_USD(cas60.C630000 + cas60.C610000)
     return cas60

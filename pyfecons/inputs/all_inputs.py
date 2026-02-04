@@ -3,6 +3,7 @@ from dataclasses import dataclass, field
 from pyfecons.inputs.basic import Basic
 from pyfecons.inputs.blanket import Blanket
 from pyfecons.inputs.coils import Coils
+from pyfecons.inputs.costing_constants import CostingConstants
 from pyfecons.inputs.customer_info import CustomerInfo
 from pyfecons.inputs.direct_energy_converter import DirectEnergyConverter
 from pyfecons.inputs.financial import Financial
@@ -58,3 +59,4 @@ class AllInputs(SerializableToJSON):
 
     # created here for reference in inputs.json
     materials: Materials = field(default_factory=Materials)
+    costing_constants: CostingConstants = field(default_factory=CostingConstants)
