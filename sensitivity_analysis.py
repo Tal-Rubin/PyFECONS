@@ -92,16 +92,16 @@ def get_scalar_leaves(obj, prefix: str = "") -> Dict[str, Tuple]:
 def sensitivity_analysis(baseline_inputs: AllInputs, delta_frac: float = 0.01) -> Dict:
     """
     Compute ∂(LCOE)/∂(input_i) for all scalar inputs using finite differences.
-    
+
     Approach:
     - Run full PyFECONS costing for baseline and perturbed inputs
     - Use finite differences: (LCOE_perturbed - LCOE_baseline) / delta
     - Compute for all scalar input parameters
-    
+
     Args:
         baseline_inputs: The baseline AllInputs instance.
         delta_frac: Fractional perturbation (0.01 = 1%).
-    
+
     Returns:
         Dictionary with:
         - 'lcoe_baseline': baseline LCOE
@@ -141,7 +141,7 @@ def sensitivity_analysis(baseline_inputs: AllInputs, delta_frac: float = 0.01) -
             try:
                 perturbed_costing = RunCosting(perturbed_inputs)
                 lcoe_perturbed = float(perturbed_costing.lcoe.C1000000)
-                
+
                 if lcoe_perturbed is not None:
                     # Partial derivative: ∂(LCOE)/∂(input_i)
                     derivative = (lcoe_perturbed - lcoe_baseline) / delta
@@ -181,7 +181,7 @@ def sensitivity_analysis(baseline_inputs: AllInputs, delta_frac: float = 0.01) -
 def save_results_to_excel(results: Dict, output_file: str = "lcoe_sensitivity_analysis.xlsx"):
     """
     Save sensitivity analysis results to an Excel file with multiple sheets.
-    
+
     Args:
         results: Dictionary returned by sensitivity_analysis()
         output_file: Output Excel filename
@@ -213,7 +213,7 @@ def save_results_to_excel(results: Dict, output_file: str = "lcoe_sensitivity_an
                 'Elasticity': elasticity,
                 '|Elasticity| (Ranking)': abs(elasticity),
             })
-        
+
         all_df = pd.DataFrame(all_data)
         all_df.to_excel(writer, sheet_name='All Derivatives', index=False)
 
