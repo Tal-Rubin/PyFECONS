@@ -14,6 +14,7 @@ from dataclasses import fields
 from typing import Dict, List, Tuple
 
 import pandas as pd
+
 from pyfecons import RunCosting
 from pyfecons.inputs.all_inputs import AllInputs
 
@@ -26,6 +27,7 @@ sys.path.insert(0, customer_dir)
 
 try:
     import importlib
+
     import DefineInputs as customer_inputs_module
 
     importlib.reload(customer_inputs_module)
@@ -34,14 +36,14 @@ except (ImportError, AttributeError) as e:
     print(f"Warning: Could not load customer inputs from {customer_dir}: {e}")
     print("Using fallback minimal MFE inputs.")
     # Minimal fallback inputs
-    from pyfecons.inputs.basic import Basic
-    from pyfecons.inputs.power_input import PowerInput
     from pyfecons.enums import (
-        FusionMachineType,
         ConfinementType,
         EnergyConversion,
         FuelType,
+        FusionMachineType,
     )
+    from pyfecons.inputs.basic import Basic
+    from pyfecons.inputs.power_input import PowerInput
 
     baseline_inputs = AllInputs(
         basic=Basic(
