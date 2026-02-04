@@ -6,13 +6,18 @@ from pyfecons.inputs.costing_constants import CostingConstants
 from pyfecons.units import M_USD
 
 
-def cas25_misc_plant_equipment_costs(basic: Basic, power_table: PowerTable, constants: CostingConstants) -> CAS25:
+def cas25_misc_plant_equipment_costs(
+    basic: Basic, power_table: PowerTable, constants: CostingConstants
+) -> CAS25:
     # Cost Category 25 Miscellaneous Plant Equipment
     # No cost basis stated
     cas25 = CAS25()
 
     # From NETL https://netl.doe.gov/projects/files/CostAndPerformanceBaselineForFossilEnergyPlantsVolume1BituminousCoalAndNaturalGasToElectricity_101422.pdf
     cas25.C250000 = M_USD(
-        float(basic.n_mod) * power_table.p_et * constants.misc_plant_per_mw * inflation_factor_2019_2024
+        float(basic.n_mod)
+        * power_table.p_et
+        * constants.misc_plant_per_mw
+        * inflation_factor_2019_2024
     )
     return cas25

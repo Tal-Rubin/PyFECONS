@@ -18,9 +18,7 @@ from pyfecons import RunCosting
 from pyfecons.inputs.all_inputs import AllInputs
 
 # Add the customer directory to the path
-customer_dir = os.path.join(
-    os.path.dirname(__file__), "customers", "CATF", "mfe"
-)
+customer_dir = os.path.join(os.path.dirname(__file__), "customers", "CATF", "mfe")
 customer_dir = os.path.abspath(customer_dir)
 output_dir = os.path.join(customer_dir, "output")
 os.makedirs(output_dir, exist_ok=True)
@@ -38,7 +36,12 @@ except (ImportError, AttributeError) as e:
     # Minimal fallback inputs
     from pyfecons.inputs.basic import Basic
     from pyfecons.inputs.power_input import PowerInput
-    from pyfecons.enums import FusionMachineType, ConfinementType, EnergyConversion, FuelType
+    from pyfecons.enums import (
+        FusionMachineType,
+        ConfinementType,
+        EnergyConversion,
+        FuelType,
+    )
 
     baseline_inputs = AllInputs(
         basic=Basic(
@@ -147,9 +150,13 @@ def sensitivity_analysis(baseline_inputs: AllInputs, delta_frac: float = 0.01) -
                     derivative = (lcoe_perturbed - lcoe_baseline) / delta
                     elasticity = derivative * baseline_val / lcoe_baseline
                     derivatives[path] = (derivative, baseline_val, elasticity)
-                    print(f"{path:50s} = {baseline_val:15.4f}  →  ∂(LCOE)/∂ = {derivative:12.6f}")
+                    print(
+                        f"{path:50s} = {baseline_val:15.4f}  →  ∂(LCOE)/∂ = {derivative:12.6f}"
+                    )
                 else:
-                    print(f"{path:50s} = {baseline_val:15.4f}  →  ERROR computing perturbed LCOE")
+                    print(
+                        f"{path:50s} = {baseline_val:15.4f}  →  ERROR computing perturbed LCOE"
+                    )
             except Exception as e:
                 print(f"{path:50s} = {baseline_val:15.4f}  →  ERROR: {e}")
 
@@ -157,13 +164,13 @@ def sensitivity_analysis(baseline_inputs: AllInputs, delta_frac: float = 0.01) -
     print("=" * 110)
     print("SENSITIVITY RANKING (by absolute elasticity)")
     print("=" * 110)
-    print(f"{'Rank':<5} {'Input Parameter':<50} {'Baseline':<15} {'∂(LCOE)/∂':<15} {'|Elasticity|':<15}")
+    print(
+        f"{'Rank':<5} {'Input Parameter':<50} {'Baseline':<15} {'∂(LCOE)/∂':<15} {'|Elasticity|':<15}"
+    )
     print("-" * 110)
 
     sorted_derivs = sorted(
-        derivatives.items(),
-        key=lambda x: abs(x[1][2]),
-        reverse=True
+        derivatives.items(), key=lambda x: abs(x[1][2]), reverse=True
     )
 
     for rank, (path, (deriv, baseline_val, elasticity)) in enumerate(sorted_derivs, 1):
@@ -178,7 +185,9 @@ def sensitivity_analysis(baseline_inputs: AllInputs, delta_frac: float = 0.01) -
     }
 
 
-def save_results_to_excel(results: Dict, output_file: str = "lcoe_sensitivity_analysis.xlsx"):
+def save_results_to_excel(
+    results: Dict, output_file: str = "lcoe_sensitivity_analysis.xlsx"
+):
     """
     Save sensitivity analysis results to an Excel file with multiple sheets.
 
@@ -190,37 +199,38 @@ def save_results_to_excel(results: Dict, output_file: str = "lcoe_sensitivity_an
         print("ERROR: No results to save.")
         return
 
-    with pd.ExcelWriter(output_file, engine='openpyxl') as writer:
+    with pd.ExcelWriter(output_file, engine="openpyxl") as writer:
         # Sheet 1: Summary
         summary_data = {
-            'Metric': ['Baseline LCOE (M$/MWh)', 'Total Parameters Analyzed'],
-            'Value': [
-                f"{results['lcoe_baseline']:.6f}",
-                len(results['derivatives'])
-            ]
+            "Metric": ["Baseline LCOE (M$/MWh)", "Total Parameters Analyzed"],
+            "Value": [f"{results['lcoe_baseline']:.6f}", len(results["derivatives"])],
         }
         summary_df = pd.DataFrame(summary_data)
-        summary_df.to_excel(writer, sheet_name='Summary', index=False)
+        summary_df.to_excel(writer, sheet_name="Summary", index=False)
 
         # Sheet 2: All derivatives ranked by absolute elasticity
         all_data = []
-        for rank, (path, (deriv, baseline_val, elasticity)) in enumerate(results['sorted_by_elasticity'], 1):
-            all_data.append({
-                'Rank': rank,
-                'Input Parameter': path,
-                'Baseline Value': baseline_val,
-                '∂(LCOE)/∂': deriv,
-                'Elasticity': elasticity,
-                '|Elasticity| (Ranking)': abs(elasticity),
-            })
+        for rank, (path, (deriv, baseline_val, elasticity)) in enumerate(
+            results["sorted_by_elasticity"], 1
+        ):
+            all_data.append(
+                {
+                    "Rank": rank,
+                    "Input Parameter": path,
+                    "Baseline Value": baseline_val,
+                    "∂(LCOE)/∂": deriv,
+                    "Elasticity": elasticity,
+                    "|Elasticity| (Ranking)": abs(elasticity),
+                }
+            )
 
         all_df = pd.DataFrame(all_data)
-        all_df.to_excel(writer, sheet_name='All Derivatives', index=False)
+        all_df.to_excel(writer, sheet_name="All Derivatives", index=False)
 
         # Sheet 3: Top 20 most sensitive
         top20_data = all_data[:20]
         top20_df = pd.DataFrame(top20_data)
-        top20_df.to_excel(writer, sheet_name='Top 20', index=False)
+        top20_df.to_excel(writer, sheet_name="Top 20", index=False)
 
     print(f"\nResults saved to: {output_file}")
 

@@ -7,7 +7,9 @@ from pyfecons.inputs.costing_constants import CostingConstants
 from pyfecons.units import M_USD
 
 
-def cas_21_building_costs(basic: Basic, power_table: PowerTable, constants: CostingConstants) -> CAS21:
+def cas_21_building_costs(
+    basic: Basic, power_table: PowerTable, constants: CostingConstants
+) -> CAS21:
     # Cost Category 21: Buildings
     cas21 = CAS21()
     p_et = power_table.p_et
@@ -23,10 +25,14 @@ def cas_21_building_costs(basic: Basic, power_table: PowerTable, constants: Cost
     )
 
     # 21.01.00,,Site improvements and facs. Source: [1] cost account 13, page 134
-    cas21.C210100 = M_USD(k_to_m_usd(constants.site_improvements_per_kw) * p_et * fuel_scaling_factor)
+    cas21.C210100 = M_USD(
+        k_to_m_usd(constants.site_improvements_per_kw) * p_et * fuel_scaling_factor
+    )
 
     # 21.02.00,,Fusion Heat Island Building,Concrete & Steel,. Source: [2], pg 11.
-    cas21.C210200 = M_USD(k_to_m_usd(constants.fusion_heat_island_per_kw) * p_et * fuel_scaling_factor)
+    cas21.C210200 = M_USD(
+        k_to_m_usd(constants.fusion_heat_island_per_kw) * p_et * fuel_scaling_factor
+    )
 
     # 21.03.00,,Turbine building,Steel. Source: [1] cost account 14.2, page 134
     cas21.C210300 = M_USD(k_to_m_usd(constants.turbine_building_per_kw) * p_et)
@@ -35,13 +41,17 @@ def cas_21_building_costs(basic: Basic, power_table: PowerTable, constants: Cost
     cas21.C210400 = M_USD(k_to_m_usd(constants.heat_exchanger_building_per_kw) * p_et)
 
     # 21.05.00,,Power supply & energy storage,Concrete & Steel,Source: scaled from [1] cost account 14.2, page 134
-    cas21.C210500 = M_USD(k_to_m_usd(constants.power_supply_energy_storage_per_kw) * p_et)
+    cas21.C210500 = M_USD(
+        k_to_m_usd(constants.power_supply_energy_storage_per_kw) * p_et
+    )
 
     # 21.06.00,,Reactor auxiliaries,Concrete & Steel, Source: [1] cost account 14.8, page 134
     cas21.C210600 = M_USD(k_to_m_usd(constants.reactor_auxiliaries_per_kw) * p_et)
 
     # 21.07.00,,Hot cell,Concrete & Steel, Source: [1] cost account 14.1, page 134
-    cas21.C210700 = M_USD(k_to_m_usd(constants.hot_cell_per_kw) * p_et * fuel_scaling_factor)
+    cas21.C210700 = M_USD(
+        k_to_m_usd(constants.hot_cell_per_kw) * p_et * fuel_scaling_factor
+    )
 
     # 21.08.00,,Reactor services,Steel frame, Source: scaled from [1] cost account 14.1, page 134
     cas21.C210800 = M_USD(k_to_m_usd(constants.reactor_services_per_kw) * p_et)
@@ -97,7 +107,9 @@ def cas_21_building_costs(basic: Basic, power_table: PowerTable, constants: Cost
     if basic.noak:
         cas21.C211900 = M_USD(0)
     else:
-        cas21.C211900 = M_USD(constants.contingency_rate * cas21.C210000)  # 10% contingency
+        cas21.C211900 = M_USD(
+            constants.contingency_rate * cas21.C210000
+        )  # 10% contingency
 
     cas21.C210000 = M_USD(cas21.C210000 + cas21.C211900)
 

@@ -4,7 +4,9 @@ from pyfecons.costing.categories.cas700000 import CAS70
 from pyfecons.inputs.costing_constants import CostingConstants
 
 
-def cas70_annualized_om_costs(power_table: PowerTable, constants: CostingConstants) -> CAS70:
+def cas70_annualized_om_costs(
+    power_table: PowerTable, constants: CostingConstants
+) -> CAS70:
     # Cost Category  70 Annualized O&M Cost (AOC)
     cas70 = CAS70()
 

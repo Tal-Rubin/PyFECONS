@@ -6,7 +6,10 @@ from pyfecons.units import M_USD
 
 
 def cas50_capitalized_supplementary_costs(
-    basic: Basic, power_table: PowerTable, cas23_to_28_total_cost: M_USD, constants: CostingConstants
+    basic: Basic,
+    power_table: PowerTable,
+    cas23_to_28_total_cost: M_USD,
+    constants: CostingConstants,
 ) -> CAS50:
     # Cost Category 50 Capitalized Supplementary Costs (CSC)
     # TODO determine cost basis, ask simon
@@ -28,7 +31,11 @@ def cas50_capitalized_supplementary_costs(
 
     # Cost Category 55 – Initial Fuel Load
     # $22 M to $34 M (2016 USD) for a standard 150 MWe FPP.
-    cas50.C550000 = M_USD(power_table.p_net / constants.fuel_load_reference_power_mw * constants.fuel_load_reference_cost_musd)
+    cas50.C550000 = M_USD(
+        power_table.p_net
+        / constants.fuel_load_reference_power_mw
+        * constants.fuel_load_reference_cost_musd
+    )
 
     # Cost Category 58 – Decommissioning Costs
     cas50.C580000 = constants.decommissioning

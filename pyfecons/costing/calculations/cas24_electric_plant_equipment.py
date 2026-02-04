@@ -14,6 +14,9 @@ def cas24_electric_plant_equipment_costs(
 
     # Source: page 508 https://netl.doe.gov/projects/files/CostAndPerformanceBaselineForFossilEnergyPlantsVolume1BituminousCoalAndNaturalGasToElectricity_101422.pdf
     cas24.C240000 = M_USD(
-        float(basic.n_mod) * power_table.p_et * constants.electric_plant_per_mw * inflation_factor_2019_2024
+        float(basic.n_mod)
+        * power_table.p_et
+        * constants.electric_plant_per_mw
+        * inflation_factor_2019_2024
     )
     return cas24

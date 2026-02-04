@@ -6,12 +6,17 @@ from pyfecons.inputs.costing_constants import CostingConstants
 from pyfecons.units import M_USD
 
 
-def cas23_turbine_plant_equipment_costs(basic: Basic, power_table: PowerTable, constants: CostingConstants) -> CAS23:
+def cas23_turbine_plant_equipment_costs(
+    basic: Basic, power_table: PowerTable, constants: CostingConstants
+) -> CAS23:
     # Cost Category 23 Turbine Plant Equipment
     cas23 = CAS23()
 
     # Source: page 507 https://netl.doe.gov/projects/files/CostAndPerformanceBaselineForFossilEnergyPlantsVolume1BituminousCoalAndNaturalGasToElectricity_101422.pdf
     cas23.C230000 = M_USD(
-        float(basic.n_mod) * power_table.p_et * constants.turbine_plant_per_mw * inflation_factor_2019_2024
+        float(basic.n_mod)
+        * power_table.p_et
+        * constants.turbine_plant_per_mw
+        * inflation_factor_2019_2024
     )
     return cas23

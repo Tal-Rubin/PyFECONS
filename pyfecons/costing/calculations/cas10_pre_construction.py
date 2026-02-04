@@ -16,7 +16,10 @@ M2_TO_ACRES = 0.000247105
 
 
 def _compute_tritium_land_addon(
-    basic: Basic, tritium: TritiumRelease | None, baseline_land_cost: M_USD, constants: CostingConstants
+    basic: Basic,
+    tritium: TritiumRelease | None,
+    baseline_land_cost: M_USD,
+    constants: CostingConstants,
 ) -> M_USD:
     """
     Safety-driven land / tritium release mitigation add-on (C110200).
@@ -99,7 +102,10 @@ def _compute_tritium_land_addon(
 
 
 def cas_10_pre_construction_costs(
-    basic: Basic, power_table: PowerTable, tritium: TritiumRelease | None, constants: CostingConstants
+    basic: Basic,
+    power_table: PowerTable,
+    tritium: TritiumRelease | None,
+    constants: CostingConstants,
 ) -> CAS10:
     # Cost Category 10: Pre-construction Costs
     cas10 = CAS10()
@@ -111,11 +117,15 @@ def cas_10_pre_construction_costs(
             power_table.p_neutron
             / constants.land_cost_power_normalization_mw
             * constants.land_cost_scaling_factor
-            + basic.p_nrl / constants.land_cost_power_normalization_mw * constants.land_cost_scaling_factor
+            + basic.p_nrl
+            / constants.land_cost_power_normalization_mw
+            * constants.land_cost_scaling_factor
         )
     )
     # Safety-driven land / tritium release mitigation add-on
-    cas10.C110200 = _compute_tritium_land_addon(basic, tritium, cas10.C110100, constants)
+    cas10.C110200 = _compute_tritium_land_addon(
+        basic, tritium, cas10.C110100, constants
+    )
     cas10.C110000 = cas10.C110100 + cas10.C110200
 
     # Cost Category 12 – Site Permits

@@ -102,7 +102,9 @@ def GenerateCostingData(inputs: AllInputs) -> CostingData:
     data.cas10 = cas_10_pre_construction_costs(
         inputs.basic, data.power_table, inputs.tritium_release, inputs.costing_constants
     )
-    data.cas21 = cas_21_building_costs(inputs.basic, data.power_table, inputs.costing_constants)
+    data.cas21 = cas_21_building_costs(
+        inputs.basic, data.power_table, inputs.costing_constants
+    )
     data.cas220101 = cas_220101_reactor_equipment_costs(
         inputs.basic, inputs.radial_build, inputs.blanket
     )
@@ -141,23 +143,45 @@ def GenerateCostingData(inputs: AllInputs) -> CostingData:
     data.cas22 = cas22_reactor_plant_equipment_total_costs(
         data.cas2201_total_cost(), data.cas2200_total_cost()
     )
-    data.cas23 = cas23_turbine_plant_equipment_costs(inputs.basic, data.power_table, inputs.costing_constants)
-    data.cas24 = cas24_electric_plant_equipment_costs(inputs.basic, data.power_table, inputs.costing_constants)
-    data.cas25 = cas25_misc_plant_equipment_costs(inputs.basic, data.power_table, inputs.costing_constants)
-    data.cas26 = cas26_heat_rejection_costs(inputs.basic, data.power_table, inputs.costing_constants)
+    data.cas23 = cas23_turbine_plant_equipment_costs(
+        inputs.basic, data.power_table, inputs.costing_constants
+    )
+    data.cas24 = cas24_electric_plant_equipment_costs(
+        inputs.basic, data.power_table, inputs.costing_constants
+    )
+    data.cas25 = cas25_misc_plant_equipment_costs(
+        inputs.basic, data.power_table, inputs.costing_constants
+    )
+    data.cas26 = cas26_heat_rejection_costs(
+        inputs.basic, data.power_table, inputs.costing_constants
+    )
     data.cas27 = cas27_special_materials_costs(inputs.blanket, data.cas220101)
     data.cas28 = cas28_digital_twin_costs(inputs.costing_constants)
-    data.cas29 = cas29_contingency_costs(inputs.basic, data.cas2x_total_cost(), inputs.costing_constants)
+    data.cas29 = cas29_contingency_costs(
+        inputs.basic, data.cas2x_total_cost(), inputs.costing_constants
+    )
     data.cas20 = cas20_total_costs(data.cas2x_total_cost())
     data.cas30 = cas30_capitalized_indirect_service_costs(
-        inputs.basic, inputs.lsa_levels, data.power_table, data.cas20, inputs.costing_constants
+        inputs.basic,
+        inputs.lsa_levels,
+        data.power_table,
+        data.cas20,
+        inputs.costing_constants,
     )
     data.cas40 = cas40_capitalized_owner_costs(inputs.lsa_levels, data.cas20)
     data.cas50 = cas50_capitalized_supplementary_costs(
-        inputs.basic, data.power_table, data.cas23_to_28_total_cost(), inputs.costing_constants
+        inputs.basic,
+        data.power_table,
+        data.cas23_to_28_total_cost(),
+        inputs.costing_constants,
     )
     data.cas60 = cas60_capitalized_financial_costs(
-        inputs.basic, inputs.financial, inputs.lsa_levels, data.power_table, data.cas20, inputs.costing_constants
+        inputs.basic,
+        inputs.financial,
+        inputs.lsa_levels,
+        data.power_table,
+        data.cas20,
+        inputs.costing_constants,
     )
     data.cas70 = cas70_annualized_om_costs(data.power_table, inputs.costing_constants)
     data.cas780000 = cas_780000_insurance_costs(inputs.basic, inputs.lsa_levels)
