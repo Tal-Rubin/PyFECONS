@@ -128,17 +128,11 @@ def RenderFinalReport(
         )
         # Run pdflatex multiple times for TOC/references (don't use check=True as
         # pdflatex may return non-zero exit code due to warnings even when PDF is generated)
-        subprocess.run(
-            ["pdflatex", "-interaction=nonstopmode", document_tex], **args
-        )
+        subprocess.run(["pdflatex", "-interaction=nonstopmode", document_tex], **args)
         # Run bibtex but don't fail if it errors (e.g., no citations or missing .bib files)
         subprocess.run(["bibtex", document_base_name], check=False, **args)
-        subprocess.run(
-            ["pdflatex", "-interaction=nonstopmode", document_tex], **args
-        )
-        subprocess.run(
-            ["pdflatex", "-interaction=nonstopmode", document_tex], **args
-        )
+        subprocess.run(["pdflatex", "-interaction=nonstopmode", document_tex], **args)
+        subprocess.run(["pdflatex", "-interaction=nonstopmode", document_tex], **args)
 
         # Verify PDF was generated
         if not os.path.exists(pdf_output_path):
