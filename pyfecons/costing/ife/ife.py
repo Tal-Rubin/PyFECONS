@@ -100,7 +100,10 @@ def GenerateCostingData(inputs: AllInputs) -> CostingData:
     data = CostingData(fusion_machine_type=FusionMachineType.IFE)
     data.power_table = power_balance(inputs.basic, inputs.power_input)
     data.cas10 = cas_10_pre_construction_costs(
-        inputs.basic, data.power_table, inputs.tritium_release, inputs.costing_constants
+        inputs.basic,
+        data.power_table,
+        inputs.tritium_release,
+        inputs.costing_constants,
     )
     data.cas21 = cas_21_building_costs(
         inputs.basic, data.power_table, inputs.costing_constants
