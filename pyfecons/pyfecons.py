@@ -120,22 +120,32 @@ def RenderFinalReport(
         os.chdir(temp_dir)
 
         document_base_name = base_name_without_extension(document_tex)
+        pdf_output_path = document_base_name + ".pdf"
         args = (
             {"stdout": subprocess.DEVNULL, "stderr": subprocess.DEVNULL}
             if hide_output
             else {}
         )
+        # Run pdflatex multiple times for TOC/references (don't use check=True as
+        # pdflatex may return non-zero exit code due to warnings even when PDF is generated)
         subprocess.run(
-            ["pdflatex", "-interaction=nonstopmode", document_tex], check=True, **args
+            ["pdflatex", "-interaction=nonstopmode", document_tex], **args
         )
         # Run bibtex but don't fail if it errors (e.g., no citations or missing .bib files)
         subprocess.run(["bibtex", document_base_name], check=False, **args)
         subprocess.run(
-            ["pdflatex", "-interaction=nonstopmode", document_tex], check=True, **args
+            ["pdflatex", "-interaction=nonstopmode", document_tex], **args
         )
         subprocess.run(
-            ["pdflatex", "-interaction=nonstopmode", document_tex], check=True, **args
+            ["pdflatex", "-interaction=nonstopmode", document_tex], **args
         )
+
+        # Verify PDF was generated
+        if not os.path.exists(pdf_output_path):
+            raise RuntimeError(
+                f"pdflatex failed to generate {pdf_output_path}. "
+                f"Check {document_base_name}.log for details."
+            )
 
         with open(document_tex, "r", encoding="utf-8") as latex_file:
             tex_content = latex_file.read()
