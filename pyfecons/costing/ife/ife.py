@@ -195,7 +195,12 @@ def GenerateCostingData(inputs: AllInputs) -> CostingData:
         inputs.basic, inputs.financial, data.cas10_to_60_total_capital_cost()
     )
     data.lcoe = lcoe_costs(
-        inputs.basic, data.power_table, data.cas70, data.cas80, data.cas90
+        inputs.basic,
+        inputs.financial,
+        data.power_table,
+        data.cas70,
+        data.cas80,
+        data.cas90,
     )
     data.npv = calculate_npv(inputs.basic, inputs.npv_input, data)
     return data
