@@ -5,65 +5,23 @@ This approach:
 1. Uses PyFECONS for full non-differentiable calculations
 2. Computes sensitivities via finite differences (simple, reliable)
 3. Accurate and requires no code changes to PyFECONS
+
+Usage:
+    python sensitivity_analysis.py mfe CATF
+    python sensitivity_analysis.py ife CATF
 """
 
+import argparse
 import os
 import sys
 from copy import deepcopy
 from dataclasses import fields
-from typing import Dict, List, Tuple
+from typing import Dict, Tuple
 
 import pandas as pd
 
 from pyfecons import RunCosting
 from pyfecons.inputs.all_inputs import AllInputs
-
-# Add the customer directory to the path
-customer_dir = os.path.join(os.path.dirname(__file__), "customers", "CATF", "mfe")
-customer_dir = os.path.abspath(customer_dir)
-output_dir = os.path.join(customer_dir, "output")
-os.makedirs(output_dir, exist_ok=True)
-sys.path.insert(0, customer_dir)
-
-try:
-    import importlib
-
-    import DefineInputs as customer_inputs_module
-
-    importlib.reload(customer_inputs_module)
-    baseline_inputs = customer_inputs_module.Generate()
-except (ImportError, AttributeError) as e:
-    print(f"Warning: Could not load customer inputs from {customer_dir}: {e}")
-    print("Using fallback minimal MFE inputs.")
-    # Minimal fallback inputs
-    from pyfecons.enums import (
-        ConfinementType,
-        EnergyConversion,
-        FuelType,
-        FusionMachineType,
-    )
-    from pyfecons.inputs.basic import Basic
-    from pyfecons.inputs.power_input import PowerInput
-
-    baseline_inputs = AllInputs(
-        basic=Basic(
-            fusion_machine_type=FusionMachineType.MFE,
-            confinement_type=ConfinementType.SPHERICAL_TOKAMAK,
-            energy_conversion=EnergyConversion.TURBINE,
-            fuel_type=FuelType.DT,
-            p_nrl=1000.0,  # MW
-            n_mod=1,
-            am=0.85,
-            downtime=0.1,
-            construction_time=5.0,
-            plant_lifetime=30.0,
-            plant_availability=0.75,
-            yearly_inflation=0.03,
-        ),
-        power_input=PowerInput(
-            p_th=3000.0,  # MW thermal
-        ),
-    )
 
 
 def get_scalar_leaves(obj, prefix: str = "") -> Dict[str, Tuple]:
@@ -237,13 +195,90 @@ def save_results_to_excel(
     print(f"\nResults saved to: {output_file}")
 
 
+def load_customer_inputs(
+    fusion_machine_type: str, customer_name: str
+) -> Tuple[AllInputs, str]:
+    """
+    Load customer inputs from the customer directory.
+
+    Args:
+        fusion_machine_type: 'mfe', 'ife', or 'mif'
+        customer_name: Customer folder name (e.g., 'CATF')
+
+    Returns:
+        Tuple of (AllInputs instance, output_dir path)
+    """
+    customer_dir = os.path.join(
+        os.path.dirname(__file__), "customers", customer_name, fusion_machine_type
+    )
+    customer_dir = os.path.abspath(customer_dir)
+    output_dir = os.path.join(customer_dir, "output")
+    os.makedirs(output_dir, exist_ok=True)
+    sys.path.insert(0, customer_dir)
+
+    try:
+        import importlib
+
+        DefineInputs = __import__("DefineInputs")
+        importlib.reload(DefineInputs)
+
+        if "Generate" not in dir(DefineInputs):
+            raise AttributeError("Generate function is missing in DefineInputs.py.")
+
+        inputs = DefineInputs.Generate()
+        if not isinstance(inputs, AllInputs):
+            raise TypeError("Generate function must return an instance of AllInputs.")
+
+        return inputs, output_dir
+
+    except ImportError as e:
+        print(f"ERROR: Could not import DefineInputs from {customer_dir}: {e}")
+        sys.exit(1)
+    except AttributeError as e:
+        print(f"ERROR: {e}")
+        sys.exit(1)
+    except TypeError as e:
+        print(f"ERROR: {e}")
+        sys.exit(1)
+
+
 if __name__ == "__main__":
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(
+        description="Run LCOE sensitivity analysis for a customer"
+    )
+    parser.add_argument(
+        "fusion_machine_type",
+        type=str,
+        choices=["mfe", "ife", "mif"],
+        help="Fusion machine type: mfe, ife, or mif",
+    )
+    parser.add_argument("customer_name", type=str, help="Customer name (e.g., CATF)")
+    parser.add_argument(
+        "--delta",
+        type=float,
+        default=0.01,
+        help="Fractional perturbation for finite differences (default: 0.01 = 1%%)",
+    )
+    args = parser.parse_args()
+
+    if args.fusion_machine_type == "mif":
+        print("FUSION_MACHINE_TYPE mif not yet implemented...")
+        sys.exit(1)
+
+    # Load customer inputs
+    baseline_inputs, output_dir = load_customer_inputs(
+        args.fusion_machine_type, args.customer_name
+    )
+
     print("=" * 90)
-    print("LCOE SENSITIVITY ANALYSIS (Finite Differences + PyFECONS)")
+    print(
+        f"LCOE SENSITIVITY ANALYSIS: {args.customer_name} ({args.fusion_machine_type})"
+    )
     print("=" * 90)
     print()
 
-    results = sensitivity_analysis(baseline_inputs, delta_frac=0.01)
+    results = sensitivity_analysis(baseline_inputs, delta_frac=args.delta)
 
     if results:
         print()
