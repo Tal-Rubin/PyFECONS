@@ -186,7 +186,9 @@ def GenerateCostingData(inputs: AllInputs) -> CostingData:
         data.cas20,
         inputs.costing_constants,
     )
-    data.cas70 = cas70_annualized_om_costs(data.power_table, inputs.costing_constants)
+    data.cas70 = cas70_annualized_om_costs(
+        inputs.basic, inputs.financial, data.power_table, inputs.costing_constants
+    )
     data.cas780000 = cas_780000_insurance_costs(inputs.basic, inputs.lsa_levels)
     if data.cas780000.C780000 not in (None, 0):
         data.cas70.C700000 = data.cas70.C700000 + data.cas780000.C780000
@@ -195,12 +197,7 @@ def GenerateCostingData(inputs: AllInputs) -> CostingData:
         inputs.basic, inputs.financial, data.cas10_to_60_total_capital_cost()
     )
     data.lcoe = lcoe_costs(
-        inputs.basic,
-        inputs.financial,
-        data.power_table,
-        data.cas70,
-        data.cas80,
-        data.cas90,
+        inputs.basic, data.power_table, data.cas70, data.cas80, data.cas90
     )
     data.npv = calculate_npv(inputs.basic, inputs.npv_input, data)
     return data

@@ -145,6 +145,20 @@ def sensitivity_analysis(baseline_inputs: AllInputs, delta_frac: float = 0.01) -
     }
 
 
+def autofit_columns(worksheet):
+    """Auto-fit column widths based on content."""
+    for column_cells in worksheet.columns:
+        max_length = 0
+        column_letter = column_cells[0].column_letter
+        for cell in column_cells:
+            try:
+                cell_length = len(str(cell.value)) if cell.value else 0
+                max_length = max(max_length, cell_length)
+            except (TypeError, AttributeError):
+                pass
+        worksheet.column_dimensions[column_letter].width = max_length + 2
+
+
 def save_results_to_excel(
     results: Dict, output_file: str = "lcoe_sensitivity_analysis.xlsx"
 ):
@@ -191,6 +205,10 @@ def save_results_to_excel(
         top20_data = all_data[:20]
         top20_df = pd.DataFrame(top20_data)
         top20_df.to_excel(writer, sheet_name="Top 20", index=False)
+
+        # Auto-fit columns for all sheets
+        for sheet_name in writer.sheets:
+            autofit_columns(writer.sheets[sheet_name])
 
     print(f"\nResults saved to: {output_file}")
 

@@ -111,17 +111,16 @@ def cas_10_pre_construction_costs(
     cas10 = CAS10()
 
     # Cost Category 11: Land and Land Rights
-    cas10.C110100 = M_USD(
-        math.sqrt(basic.n_mod)
-        * (
-            power_table.p_neutron
-            / constants.land_cost_power_normalization_mw
-            * constants.land_cost_scaling_factor
-            + basic.p_nrl
-            / constants.land_cost_power_normalization_mw
-            * constants.land_cost_scaling_factor
-        )
+    # Land intensity approach (2025 update):
+    # Site area based on net electric power and empirical land intensity
+    # from modern compact fusion projects (CFS ARC: 0.25 acres/MWe).
+    # Multi-module plants share infrastructure, scaling as sqrt(n_mod).
+    site_area_acres = (
+        constants.land_intensity_acres_per_mwe
+        * power_table.p_net
+        * math.sqrt(basic.n_mod)
     )
+    cas10.C110100 = M_USD(site_area_acres * constants.land_cost_usd_per_acre / 1e6)
     # Safety-driven land / tritium release mitigation add-on
     cas10.C110200 = _compute_tritium_land_addon(
         basic, tritium, cas10.C110100, constants

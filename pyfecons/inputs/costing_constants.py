@@ -14,9 +14,9 @@ class CostingConstants:
     other_pre_construction: M_USD = M_USD(1)
 
     # CAS 10: Land cost calibration
-    land_cost_power_normalization_mw: MW = MW(239.0)
-    land_cost_scaling_factor: Ratio = Ratio(0.9)
-    us_farm_real_estate_value_usd_per_acre: Unknown = Unknown(3800.0)
+    land_intensity_acres_per_mwe: Ratio = Ratio(0.25)
+    land_cost_usd_per_acre: Unknown = Unknown(10000.0)
+    us_farm_real_estate_value_usd_per_acre: Unknown = Unknown(4350.0)
     stack_release_fraction: Ratio = Ratio(0.10)
 
     # CAS 21: Building costs ($/kW)

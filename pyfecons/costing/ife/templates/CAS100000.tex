@@ -14,11 +14,37 @@ Prior example: 462 acres $\times$ \$10,900/acre = \$4.9 million / 150 MW plant c
  Use of existing power plant site (potentially streamlined siting process if an existing nuclear fission plant site, perhaps after the fission plant has retired, but could also be a coal plant for repowering with fusion); minimum plant site acreage (much less need for buffer area than fission plant because fusion plants ; minimum price acre (marginal land far from cities (although it could also be argued that low radiation source terms will allow siting closer to cities)). 
 Representative plant acreage and cost per acre for greenfield plant site: 400 acres $\times$ \$10,000/acre = \$4 million / 150 MW plant capacity = \$27/kW, giving 23.8 M \$.  \\
 
- \textbf{2022 update} 
-A fusion power core will have a footprint as discussed in Cost Category 21, consisting of buildings that contain the fusion power core, turbine hall and hotcell. For most concepts, the site will also house switchyards and heat rejection (cooling towers). The site size will be set by the regulating authority, which will prescribe a site size proportional to the tritium inventory.  The cost basis here is to determine the costs of the site beyond the boundary of the buildings scale in linear proportion to neutron power, with aneutronic fuels requiring the smallest boundary.  Note also that these costs will not be required for retrofitting an existing power plant, or for heat sources that are brought onto an existing site.  Greenfield site costs will vary by location. The costs are C110000 M for a system comprising of Nmod modules. 
- The expression used to calculate the cost is given below: 
-\begin{verbatim} 
-C_20 = sqrt(N_mod) * (P_NEUTRON /239 * 0.9 + P_FUSION/239*0.9)\end{verbatim} 
+ \textbf{2022 update}
+A fusion power core will have a footprint as discussed in Cost Category 21, consisting of buildings that contain the fusion power core, turbine hall and hotcell. For most concepts, the site will also house switchyards and heat rejection (cooling towers). The site size will be set by the regulating authority, which will prescribe a site size proportional to the tritium inventory.  The cost basis here is to determine the costs of the site beyond the boundary of the buildings scale in linear proportion to neutron power, with aneutronic fuels requiring the smallest boundary.  Note also that these costs will not be required for retrofitting an existing power plant, or for heat sources that are brought onto an existing site.  Greenfield site costs will vary by location. \\
+
+\textbf{2025 update}
+Modern compact fusion designs require significantly less land than the legacy 1,000-acre assumption used in earlier ARIES studies. Current projects demonstrate site sizes of 20--200 acres for commercial-scale plants:
+
+\begin{center}
+\begin{tabular}{l l r r l}
+\hline
+\textbf{Project} & \textbf{Company} & \textbf{Acres} & \textbf{MWe} & \textbf{Type} \\
+\hline
+ARC & CFS & 100 & 400 & Compact tokamak \\
+Orion & Helion & 80 & 50 & FRC (pulsed) \\
+Infinity Two & Type One Energy & $\sim$200 & 350 & Stellarator \\
+TAE plant & TAE Technologies & $\geq$20 & 50--500 & FRC (p-B11) \\
+STEP & UKAEA & 410 & $\sim$100 & Spherical tokamak \\
+\hline
+\end{tabular}
+\end{center}
+
+D-T fusion under NRC Part 30 requires no 10-mile exclusion zone (emergency planning at site boundary only), enabling compact siting comparable to gas turbine plants. The CFS ARC project (100 acres for 400 MWe) provides the best commercial-scale data point, yielding a land intensity of $\sim$0.25 acres/MWe.
+
+US farmland averages \$4,350/acre (USDA 2025). Industrial-zoned sites near grid infrastructure command a 2--5$\times$ premium, giving a working estimate of $\sim$\$10,000/acre for greenfield fusion siting.
+
+The updated cost expression uses net electric power and empirical land intensity:
+\begin{verbatim}
+Land and Land Rights Cost = sqrt(N_mod) * land_intensity * P_NET * cost_per_acre / 1e6
+\end{verbatim}
+where land\_intensity = 0.25 acres/MWe and cost\_per\_acre = \$10,000.
+
+The costs are C110000 M for a system comprising of Nmod modules. 
 
 \ifsafetycosts
 Accounting for tritium release from storage, the total land and land rights cost C110000 is conceptually split into:

@@ -236,3 +236,7 @@ with open(f"{output_dir}/{report_filename}.tex", "w", encoding="utf-8") as file:
     file.write(final_report.report_tex)
 with open(f"{output_dir}/{report_filename}.pdf", "wb") as file:
     file.write(final_report.report_pdf)
+
+print(
+    f"\nThe calculated LCOE for {customer_name}, {fusion_machine_type} is ${dataDict['lcoe']['C1000000']}/MWh, c{dataDict['lcoe']['C2000000']}/kWh.\n"
+)
