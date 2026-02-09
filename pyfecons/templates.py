@@ -3,11 +3,35 @@ from typing import Optional
 
 from pyfecons.report import HydratedTemplate, ReportOverrides, ReportSection
 
+# Shared templates path - templates common to both MFE and IFE
+SHARED_TEMPLATES_PATH = "pyfecons.costing.shared.templates"
+
 
 def read_template(templates_path: str, template_file: str) -> str:
-    with resources.path(templates_path, template_file) as template_path:
-        with open(template_path, "r", encoding="utf-8") as file:
+    """Read a template file from the specified package path."""
+    try:
+        with resources.files(templates_path).joinpath(template_file).open(
+            "r", encoding="utf-8"
+        ) as file:
             return file.read()
+    except (FileNotFoundError, TypeError):
+        # Fallback for older Python versions
+        with resources.path(templates_path, template_file) as template_path:
+            with open(template_path, "r", encoding="utf-8") as file:
+                return file.read()
+
+
+def template_exists(templates_path: str, template_file: str) -> bool:
+    """Check if a template file exists in the specified package path."""
+    try:
+        return resources.files(templates_path).joinpath(template_file).is_file()
+    except (TypeError, AttributeError):
+        # Fallback for older Python versions
+        try:
+            with resources.path(templates_path, template_file):
+                return True
+        except FileNotFoundError:
+            return False
 
 
 def replace_values(template_content: str, replacements: dict[str, str]) -> str:
@@ -58,7 +82,26 @@ def load_document_template(
 def get_template_contents(
     templates_path: str, template_file: str, overrides: Optional[ReportOverrides] = None
 ) -> str:
+    """Get template contents with fallback to shared templates.
+
+    Priority order:
+    1. Customer overrides (if provided)
+    2. Machine-specific template (mfe/ife)
+    3. Shared template (common to both)
+    """
+    # Check overrides first
     if overrides is not None and template_file in overrides.templates.keys():
         return overrides.templates[template_file]
-    else:
+
+    # Try machine-specific path first
+    if template_exists(templates_path, template_file):
         return read_template(templates_path, template_file)
+
+    # Fall back to shared templates
+    if template_exists(SHARED_TEMPLATES_PATH, template_file):
+        return read_template(SHARED_TEMPLATES_PATH, template_file)
+
+    # If not found anywhere, raise an error
+    raise FileNotFoundError(
+        f"Template '{template_file}' not found in {templates_path} or {SHARED_TEMPLATES_PATH}"
+    )

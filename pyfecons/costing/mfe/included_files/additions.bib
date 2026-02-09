@@ -1,3 +1,10 @@
+% Shared bibliography for MFE and IFE fusion plant costing reports
+% Merged from mfe/included_files/additions.bib and ife/included_files/additions.bib
+
+% =============================================================================
+% General references (used by both MFE and IFE)
+% =============================================================================
+
 @article{gerich1986design,
   title={The design, construction, and testing of the vacuum vessel for the tandem Mirror Fusion Test Facility},
   author={Gerich, Jerry W},
@@ -30,7 +37,7 @@
   publisher={Elsevier}
 }
 
-# For NPV
+% For NPV
 @article{gallo2014refresher,
   title={A refresher on net present value},
   author={Gallo, Amy},
@@ -50,44 +57,9 @@
   primaryclass = {physics.plasm-ph}
 }
 
-% Safety and hazard mitigation costs
-@article{baylor2019shattered,
-  title={Shattered pellet injection technology design and characterization for disruption mitigation experiments},
-  author={Baylor, L.R. and Meitner, S.J. and Gebhart, T.E. and Caughman, J.B.O. and Herfindal, J.L. and Shiraki, D. and Youchison, D.L.},
-  journal={Nuclear Fusion},
-  volume={59},
-  number={6},
-  pages={066008},
-  year={2019},
-  publisher={IOP Publishing}
-}
-
-@techreport{iter2001final,
-  title={Final report of the ITER engineering design activities},
-  author={{ITER Council}},
-  year={2001},
-  institution={IAEA},
-  series={IAEA EDA Document Series},
-  number={21}
-}
-
-@techreport{Hamilton2001Mascot,
-  title        = {Development of the MASCOT telemanipulator control system},
-  author       = {Hamilton, D. and Preece, G.},
-  year         = {2001},
-  institution  = {European Fusion Development Agreement},
-  type         = {Project report}
-}
-
-@misc{IterRemoteHandlingWNN,
-  title        = {Contract for Iter remote handling system},
-  author       = {{World Nuclear News}},
-  howpublished = {\url{https://world-nuclear-news.org/Articles/Contract-for-Iter-remote-handling-system}},
-  note         = {Accessed 17 July 2024},
-  year         = {2010}
-}
-
+% =============================================================================
 % CAS10 Pre-construction references (2026 update)
+% =============================================================================
 
 @misc{nrc10cfr30,
   title        = {10 CFR Part 30 --- Rules of General Applicability to Domestic Licensing of Byproduct Material},
@@ -130,8 +102,10 @@
   year         = {2025}
 }
 
+% =============================================================================
 % CAS 220112: Isotope Separation Systems references
 % TODO: Replace with actual peer-reviewed sources
+% =============================================================================
 
 @misc{candu_heavy_water,
   title        = {CANDU Heavy Water Production --- PLACEHOLDER},
@@ -160,4 +134,55 @@
   year         = {2026},
   month        = {February},
   note         = {Internal technical framework document}
+}
+
+% =============================================================================
+% MFE-specific: Safety and hazard mitigation costs
+% =============================================================================
+
+@article{baylor2019shattered,
+  title={Shattered pellet injection technology design and characterization for disruption mitigation experiments},
+  author={Baylor, L.R. and Meitner, S.J. and Gebhart, T.E. and Caughman, J.B.O. and Herfindal, J.L. and Shiraki, D. and Youchison, D.L.},
+  journal={Nuclear Fusion},
+  volume={59},
+  number={6},
+  pages={066008},
+  year={2019},
+  publisher={IOP Publishing}
+}
+
+@techreport{iter2001final,
+  title={Final report of the ITER engineering design activities},
+  author={{ITER Council}},
+  year={2001},
+  institution={IAEA},
+  series={IAEA EDA Document Series},
+  number={21}
+}
+
+@techreport{Hamilton2001Mascot,
+  title        = {Development of the MASCOT telemanipulator control system},
+  author       = {Hamilton, D. and Preece, G.},
+  year         = {2001},
+  institution  = {European Fusion Development Agreement},
+  type         = {Project report}
+}
+
+@misc{IterRemoteHandlingWNN,
+  title        = {Contract for Iter remote handling system},
+  author       = {{World Nuclear News}},
+  howpublished = {\url{https://world-nuclear-news.org/Articles/Contract-for-Iter-remote-handling-system}},
+  note         = {Accessed 17 July 2024},
+  year         = {2010}
+}
+
+% =============================================================================
+% IFE-specific: Target fabrication
+% =============================================================================
+
+@techreport{miles2008life,
+  title={LIFE Target Fabrication Research Plan Sept 2008},
+  author={Miles, R and Biener, J and Kucheyev, S and Montesanti, R and Satcher, J and Spadaccini, C and Rose, K and Wang, M and Hamza, A and Alexander, N and others},
+  year={2008},
+  institution={Lawrence Livermore National Lab.(LLNL), Livermore, CA (United States)}
 }
