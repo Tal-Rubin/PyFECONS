@@ -18,6 +18,7 @@ from pyfecons.report.sections.cas220107_section import CAS220107Section
 from pyfecons.report.sections.cas220108_section import CAS220108Section
 from pyfecons.report.sections.cas220109_section import CAS220109Section
 from pyfecons.report.sections.cas220111_section import CAS220111Section
+from pyfecons.report.sections.cas220112_section import CAS220112Section
 from pyfecons.report.sections.cas220119_section import CAS220119Section
 from pyfecons.report.sections.cas220120_section import CAS220120Section
 from pyfecons.report.sections.cas220200_section import CAS2202Section
@@ -83,6 +84,7 @@ def get_report_sections(
         CAS220108Section(costing_data.cas220108, fusion_machine_type),
         CAS220109Section(costing_data.cas220109),
         CAS220111Section(costing_data.cas220111, inputs.basic, inputs.installation),
+        CAS220112Section(costing_data.cas220112, inputs.basic),
         CAS220119Section(costing_data.cas220119),
         CAS2202Section(costing_data.cas2202, inputs.blanket),
         CAS2203Section(costing_data.cas2203),

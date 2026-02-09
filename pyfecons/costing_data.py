@@ -24,6 +24,7 @@ from pyfecons.costing.categories.cas220108_divertor import CAS220108Divertor
 from pyfecons.costing.categories.cas220108_target_factory import CAS220108TargetFactory
 from pyfecons.costing.categories.cas220109 import CAS220109
 from pyfecons.costing.categories.cas220111 import CAS220111
+from pyfecons.costing.categories.cas220112 import CAS220112
 from pyfecons.costing.categories.cas220119 import CAS220119
 from pyfecons.costing.categories.cas220120 import CAS220120
 from pyfecons.costing.categories.cas220200 import CAS2202
@@ -76,6 +77,7 @@ class CostingData(SerializableToJSON):
     cas220108: Union[CAS220108Divertor, CAS220108TargetFactory] = field(default=None)
     cas220109: CAS220109 = field(default_factory=CAS220109)
     cas220111: CAS220111 = field(default_factory=CAS220111)
+    cas220112: CAS220112 = field(default_factory=CAS220112)
     cas220119: CAS220119 = field(default_factory=CAS220119)
     cas220120: CAS220120 = field(default_factory=CAS220120)
     cas2202: CAS2202 = field(default_factory=CAS2202)
@@ -150,6 +152,7 @@ class CostingData(SerializableToJSON):
             + self.cas220108.C220108
             + self.cas220109.C220109
             + self.cas220111.C220111
+            + self.cas220112.C220112
             # This needs to be zero for CAS220119 calculation to run correctly
             + (0 if self.cas220119.C220119 is None else self.cas220119.C220119)
             # Safety and hazard mitigation costs (only if enabled)

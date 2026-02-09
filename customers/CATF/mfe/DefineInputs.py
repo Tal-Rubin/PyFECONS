@@ -28,7 +28,7 @@ def Generate() -> AllInputs:
         basic=Basic(
             fusion_machine_type=FusionMachineType.MFE,
             confinement_type=ConfinementType.SPHERICAL_TOKAMAK,
-            energy_conversion=EnergyConversion.DIRECT,
+            energy_conversion=EnergyConversion.TURBINE,
             fuel_type=FuelType.DT,
             p_nrl=MW(2600.0),
             n_mod=Count(1),

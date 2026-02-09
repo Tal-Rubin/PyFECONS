@@ -47,8 +47,27 @@ class Materials:
         )  # Density and cost not provided
         self.He = Material(name="Helium")  # Density and cost not provided
         self.NbTi = Material(name="Niobium-Titanium")  # Density and cost not provided
-        self.Be = Material(name="Beryllium", rho=1850, c_raw=5750, m=3)
-        self.Li2TiO3 = Material(name="Lithium Titanate", rho=3430, c_raw=1297.05, m=3)
+
+        # Beryllium: High-purity metal for first wall applications
+        # Price: $800-1200/kg for high-purity ingots (2024-2025 market)
+        # Sources:
+        #   - Shanghai Metal Market: $1031-1035/kg (2025)
+        #   - Accio market data: $600-1200/kg range
+        #   - USGS Mineral Commodity Summaries 2024
+        # Previous value ($5750/kg) was ~5-10x too high, likely confused with
+        # aerospace-grade machined components or included excessive markup.
+        # Note: ITER switched from Be to W first wall in 2023 due to melting concerns.
+        self.Be = Material(name="Beryllium", rho=1850, c_raw=900, m=3)
+
+        # Lithium Titanate (Li2TiO3): Solid tritium breeder ceramic
+        # Price: $100-200/kg for ceramic-grade material
+        # Sources:
+        #   - MDPI review (2022): characterized as "low production cost"
+        #   - Comparable to other technical ceramics ($50-200/kg range)
+        #   - ResearchGate: "low-cost synthesis" methods actively researched
+        # Previous value ($1297/kg) was undocumented and ~6-10x too high.
+        # Li4SiO4 (alternate breeder) at $1/kg provides reasonable comparison.
+        self.Li2TiO3 = Material(name="Lithium Titanate", rho=3430, c_raw=150, m=3)
 
         # Values to be calculated
         pblir = 10

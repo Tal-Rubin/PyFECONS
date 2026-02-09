@@ -26,9 +26,10 @@ def compute_220101_replacements(
 ) -> Dict[str, str]:
     rounding = 2
     return {
-        "C22010100": str(OUT.C220101),
+        "C220101": str(OUT.C220101),
         "C22010101": str(OUT.C22010101),
         "C22010102": str(OUT.C22010102),
+        "C22010103": str(OUT.C22010103),
         "primaryC": blanket.primary_coolant.display_name,
         "secondaryC": blanket.secondary_coolant.display_name,
         "neutronM": blanket.neutron_multiplier.display_name,

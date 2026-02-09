@@ -58,8 +58,8 @@ materials = {
     "GdBCO": {},  # Density and cost not provided
     "He": {},  # Density and cost not provided
     "NbTi": {},  # Density and cost not provided
-    "Be":{"rho": 1850, "c_raw": 5750.00, "m": 3},
-    "Li2TiO3":{"rho": 3430, "c_raw": 1297.05, "m": 3},
+    "Be":{"rho": 1850, "c_raw": 900, "m": 3},  # Updated 2025: was $5750, now $900/kg per market data
+    "Li2TiO3":{"rho": 3430, "c_raw": 150, "m": 3},  # Updated 2025: was $1297, now $150/kg per ceramic pricing
 }
 
 pblir = 10

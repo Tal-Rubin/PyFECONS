@@ -19,6 +19,9 @@ from pyfecons.costing.calculations.cas22.cas220109_direct_energy_converter impor
 from pyfecons.costing.calculations.cas22.cas220111_installation import (
     cas_220111_installation_costs,
 )
+from pyfecons.costing.calculations.cas22.cas220112_isotope_separation import (
+    cas_220112_isotope_separation_costs,
+)
 from pyfecons.costing.calculations.cas22.cas220119_replacement import (
     cas_220119_scheduled_replacement_costs,
 )
@@ -142,6 +145,7 @@ def GenerateCostingData(inputs: AllInputs) -> CostingData:
     data.cas220111 = cas_220111_installation_costs(
         inputs.basic, inputs.installation, data.cas220101
     )
+    data.cas220112 = cas_220112_isotope_separation_costs(inputs.basic, data.power_table)
     data.cas220119 = cas_220119_scheduled_replacement_costs(
         inputs.primary_structure, data.cas2201_total_cost()
     )
@@ -151,7 +155,9 @@ def GenerateCostingData(inputs: AllInputs) -> CostingData:
     )
     data.cas2203 = cas_2203_auxilary_cooling_costs(inputs.basic, data.power_table)
     data.cas2204 = cas_2204_radwaste_costs(data.power_table)
-    data.cas2205 = cas_2205_fuel_handling_and_storage_costs(inputs.fuel_handling)
+    data.cas2205 = cas_2205_fuel_handling_and_storage_costs(
+        inputs.basic, inputs.fuel_handling, data.power_table
+    )
     data.cas2206 = cas_2206_other_reactor_plant_equipment_costs(data.power_table)
     data.cas220606 = cas_220606_remote_handling_costs(inputs.basic)
     # Add remote handling system cost into the overall 22.06 Other plant equipment total

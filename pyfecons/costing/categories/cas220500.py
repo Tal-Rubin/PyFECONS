@@ -19,4 +19,5 @@ class CAS2205:
     C220504: M_USD = None
     C220505: M_USD = None
     C220506: M_USD = None
+    C220507: M_USD = None  # Tritium containment barriers (D-T/D-D)
     C220500: M_USD = None

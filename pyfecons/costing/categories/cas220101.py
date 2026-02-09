@@ -55,6 +55,7 @@ class CAS220101:
     bioshield_vol: Meters3 = None  # Updated bioshield volume
 
     # Costs
-    C22010101: M_USD = None
-    C22010102: M_USD = None
-    C220101: M_USD = None
+    C22010101: M_USD = None  # First wall
+    C22010102: M_USD = None  # Blanket
+    C22010103: M_USD = None  # Neutron multiplier (Be/Pb, D-T only)
+    C220101: M_USD = None  # Total reactor equipment cost

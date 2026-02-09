@@ -1,0 +1,51 @@
+% CAS 220112: Isotope Separation Systems
+% Added 2026-02-08 based on Comprehensive Fusion Reactor Subsystems Framework
+
+\subsubsection*{Cost Category 22.01.12: Isotope Separation Systems}
+
+All fusion fuels require isotope separation infrastructure for fuel preparation. The specific isotope separation systems needed are highly fuel-dependent based on the reactor's fuel cycle.
+
+\textbf{Universal Requirements:}
+
+All fusion reactors must separate and purify fuel isotopes from natural abundances to achieve the high purity levels required for controlled fusion reactions. The isotope separation plant is a fixed capital cost component separate from the ongoing fuel consumption costs (covered in CAS 80).
+
+\textbf{Fuel-Dependent Subsystems:}
+
+\begin{itemize}
+    \item \textbf{Deuterium-Tritium (D-T) Fusion:}
+    \begin{itemize}
+        \item Deuterium extraction plant: D$_2$O extraction from seawater (natural abundance $\sim$0.015\%) via Girdler-Sulfide process or cryogenic distillation. Cost: C22011201 M\,USD.
+        \item Lithium-6 enrichment plant: COLEX process to enrich Li-6 from natural lithium (7.5\% $\rightarrow$ 30-95\%) for tritium breeding blankets. Cost: C22011202 M\,USD.
+        \item Total throughput requirement: 200-500 kg D$_2$/GWe-yr + 50-100 kg Li-6/GWe-yr.
+    \end{itemize}
+
+    \item \textbf{Deuterium-Deuterium (D-D) Fusion:}
+    \begin{itemize}
+        \item Deuterium extraction plant: Same D$_2$O extraction as D-T. Cost: C22011201 M\,USD.
+        \item No lithium enrichment required (no external tritium breeding).
+        \item Total throughput requirement: 400-1000 kg D$_2$/GWe-yr.
+    \end{itemize}
+
+    \item \textbf{Proton-Boron-11 (p-B$^{11}$) Fusion:}
+    \begin{itemize}
+        \item Protium (H-1) purification plant: Remove trace deuterium from natural hydrogen (99.985\% H-1) via cryogenic distillation. Cost: C22011203 M\,USD.
+        \item Boron-11 enrichment plant: Laser or chemical isotope separation to enrich B-11 from natural boron (80\% $\rightarrow$ >99\%) to minimize neutron production from B-10(n,$\alpha$) reactions. Cost: C22011204 M\,USD.
+        \item Total throughput requirement: 200 kg H/GWe-yr + 500-1000 kg B-11/GWe-yr.
+    \end{itemize}
+
+    \item \textbf{Deuterium-Helium-3 (D-He$^3$) Fusion:}
+    \begin{itemize}
+        \item Deuterium extraction plant: Same D$_2$O extraction as D-T/D-D. Cost: C22011201 M\,USD.
+        \item Helium-3 extraction: Currently not viable. Terrestrial production from tritium decay ($\sim$15 kg/yr globally) is insufficient compared to demand (50-100 kg/GWe-yr). Lunar mining infrastructure does not yet exist. Cost: C22011205 M\,USD (placeholder, currently \$0).
+    \end{itemize}
+\end{itemize}
+
+\textbf{Cost Scaling:}
+
+Isotope separation plant costs scale sublinearly with electric output capacity (exponent 0.6) due to economies of scale in industrial chemical processing. Base costs are calibrated to 1 GWe reference plant capacity based on CANDU heavy water production, COLEX lithium-6 enrichment facilities, and laser isotope separation research \cite{candu_heavy_water, colex_li6_enrichment, laser_isotope_separation, fusion_subsystems_framework_2026}.
+
+\textbf{Total Isotope Separation Cost:} \$ C220112 M
+
+\textbf{Note on Global Supply Constraints:}
+
+Lithium-6 enrichment capacity is currently limited to 1-2 tonnes per year globally, which may impose cost premiums or schedule constraints for D-T fusion deployment. Helium-3 availability remains a fundamental barrier to D-He$^3$ fusion commercialization absent lunar resource development.

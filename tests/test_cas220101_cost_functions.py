@@ -11,6 +11,7 @@ from pyfecons.enums import (
     BlanketStructure,
     BlanketType,
     ConfinementType,
+    FuelType,
     FusionMachineType,
 )
 from pyfecons.inputs.blanket import Blanket
@@ -47,12 +48,13 @@ def test_mfe_tokamak_cas220101_total_cost():
     result_cost = compute_cas22_reactor_equipment_total_cost(
         fusion_machine_type=FusionMachineType.MFE,
         confinement_type=ConfinementType.SPHERICAL_TOKAMAK,
+        fuel_type=FuelType.DT,
         radial_build=radial_build,
         blanket=blanket,
     )
-    expected_result_cost = (
-        2950.51  #! this could become deprecated if cost calculation changes
-    )
+    # Expected value updated 2026-02-09 after Beryllium cost correction
+    # (c_raw changed from $5,750 to $900/kg per market research)
+    expected_result_cost = 463.88
     assert pytest.approx(result_cost, rel=1e-2) == expected_result_cost
 
 
@@ -83,11 +85,15 @@ def test_mfe_mirror_cas220101_total_cost():
         bioshield_t=Meters(1),
     )
     result_cost = compute_cas22_reactor_equipment_total_cost(
-        FusionMachineType.MFE, ConfinementType.MAGNETIC_MIRROR, blanket, radial_build
+        FusionMachineType.MFE,
+        ConfinementType.MAGNETIC_MIRROR,
+        FuelType.DT,
+        blanket,
+        radial_build,
     )
-    expected_result_cost = (
-        1217.12  #! this could become deprecated if cost calculation changes
-    )
+    # Expected value updated 2026-02-09 after Beryllium cost correction
+    # (c_raw changed from $5,750 to $900/kg per market research)
+    expected_result_cost = 192.21
     assert pytest.approx(result_cost, rel=1e-2) == expected_result_cost
 
 
@@ -118,9 +124,13 @@ def test_mfe_mirror_minimal_cas220101_total_cost():
         bioshield_t=Meters(0),
     )
     result_cost = compute_cas22_reactor_equipment_total_cost(
-        FusionMachineType.MFE, ConfinementType.MAGNETIC_MIRROR, blanket, radial_build
+        FusionMachineType.MFE,
+        ConfinementType.MAGNETIC_MIRROR,
+        FuelType.DT,
+        blanket,
+        radial_build,
     )
-    expected_result_cost = (
-        84.315  #! this could become deprecated if cost calculation changes
-    )
+    # Expected value updated 2026-02-09 after Beryllium cost correction
+    # (c_raw changed from $5,750 to $900/kg per market research)
+    expected_result_cost = 13.20
     assert pytest.approx(result_cost, rel=1e-2) == expected_result_cost
