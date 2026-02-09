@@ -37,9 +37,9 @@ STEP & UKAEA & 410 & $\sim$100 & Spherical tokamak \\
 \end{tabular}
 \end{center}
 
-D-T fusion under NRC Part 30 requires no 10-mile exclusion zone (emergency planning at site boundary only), enabling compact siting comparable to gas turbine plants. The CFS ARC project (100 acres for 400 MWe) provides the best commercial-scale data point, yielding a land intensity of $\sim$0.25 acres/MWe.
+D-T fusion under NRC Part 30 \cite{nrc10cfr30} requires no 10-mile exclusion zone (emergency planning at site boundary only), enabling compact siting comparable to gas turbine plants. The CFS ARC project (100 acres for 400 MWe) provides the best commercial-scale data point, yielding a land intensity of $\sim$0.25 acres/MWe.
 
-US farmland averages \$4,350/acre (USDA 2025). Industrial-zoned sites near grid infrastructure command a 2--5$\times$ premium, giving a working estimate of $\sim$\$10,000/acre for greenfield fusion siting.
+US farmland averages \$4,350/acre \cite{usda2025farmland}. Industrial-zoned sites near grid infrastructure command a 2--5$\times$ premium, giving a working estimate of $\sim$\$10,000/acre for greenfield fusion siting.
 
 The updated cost expression uses net electric power and empirical land intensity:
 \begin{verbatim}
@@ -47,7 +47,7 @@ Land and Land Rights Cost = sqrt(N_mod) * land_intensity * P_NET * cost_per_acre
 \end{verbatim}
 where land\_intensity = 0.25 acres/MWe and cost\_per\_acre = \$10,000.
 
-The costs are C110000 M for a system comprising of Nmod modules.
+The costs are \$ C110000 M for a system comprising of Nmod modules.
 
 \ifsafetycosts
 Accounting for tritium release from storage, the total land and land rights cost C110000 is conceptually split into:
@@ -60,20 +60,37 @@ In this case C110000 = C110100 + C110200.
 
 
 \subsection*{Cost Category 12 – Site Permits}
-This Cost Category includes costs associated with obtaining all site related permits for subsequent construction of the permanent plant.  The total for this element is \$ C120000 M.
+This Cost Category includes costs associated with obtaining all site related permits for subsequent construction of the permanent plant: environmental assessment under NEPA, site characterization (geotechnical, seismic, hydrology), and state/local construction permits.
+
+\textbf{2025 update}
+Fusion under NRC Part 30 \cite{nrc10cfr30} typically requires an Environmental Assessment (EA), not a full Environmental Impact Statement (EIS). Average EIS preparation cost is \$6M for DOE projects \cite{gao14369}; an EA is substantially less (\$0.2--1M). Site characterization adds \$0.5--2M. Total range for fusion: \$2--5M.  The total for this element is \$ C120000 M.
 
 \subsection*{Cost Category 13 – Plant Licensing}
-This Cost Category includes costs associated with obtaining plant licenses for construction and operation of the plant, typically \$1 M to \$10 M. This range accounts for the technical and engineering studies, safety analyses, and environmental impact assessments required.  The total for this element is \$ C130000 M.
+This Cost Category includes costs associated with obtaining plant licenses for construction and operation of the plant.
 
-\ifsafetycosts
-Accounting for region-specific licensing requirements, an additional region-dependent licensing cost is included in the total above. This addon accounts for regulatory fees and licensing requirements specific to the selected region (United States or United Kingdom). For the United States, this includes NRC licensing fees for byproduct materials facilities. For the United Kingdom, this includes fees under REPPIR 2019 and Environment Agency charges. The total cost shown above (\$ C130000 M) already incorporates this region-specific licensing addon.
-\fi
+\textbf{2025 update}
+Fusion is regulated under 10 CFR Part 30 \cite{nrc10cfr30} (byproduct materials), not Part 50/52 (reactors), per the 2023 NRC decision codified by the ADVANCE Act \cite{advanceact2024}. Licensing cost varies by fuel type due to differing tritium inventories and neutron activation levels (NRC fee schedule per \cite{nrc10cfr170}):
+
+\begin{center}
+\begin{tabular}{l l r l}
+\hline
+\textbf{Fuel Type} & \textbf{NRC Status} & \textbf{Cost (\$M)} & \textbf{Basis} \\
+\hline
+D-T & Part 30 (full) & 5 & Tritium fuel + 14.1 MeV neutrons \\
+D-D & Part 30 (reduced) & 3 & Tritium byproduct, 2.45 MeV neutrons \\
+D-He3 & Part 30 (minimal) & 1 & Trace tritium from D-D side reactions \\
+p-B11 & Likely exempt & 0.1 & Aneutronic, no tritium \\
+\hline
+\end{tabular}
+\end{center}
+
+The total for this element is \$ C130000 M.
 
 \subsection*{Cost Category 14 – Plant Permits}
-This Cost Category includes costs associated with obtaining all permits for construction and operation of the plant, typically \$ 500,000 to \$ 5M. This cost can escalate if the licensing process is prolonged or if there are unique legal challenges.  The total for this element is \$ C140000 M.
+This Cost Category includes costs associated with obtaining all permits for construction and operation of the plant: building codes, electrical, fire safety, industrial discharge, and air quality permits. These are standard industrial permits, not nuclear-specific. Typically \$1--3M for a large industrial facility. The total for this element is \$ C140000 M.
 
 \subsection*{Cost Category 15 – Plant Studies}
-This Cost Category includes costs associated with plant studies performed for the site or plant in support of construction and operation of the plant. For new designs, this can range from \$ 10 M to over \$ 100 M, especially if new safety features or innovative technologies are being developed.  The total for this element is \$ C150000 M.
+This Cost Category includes costs associated with plant studies performed for the site or plant in support of construction and operation of the plant: engineering feasibility studies, safety case development, and technology qualification. For FOAK fusion designs with novel technology, this can range from \$10M to over \$100M; for NOAK plants reusing established designs, costs drop to \$3--5M for site-specific adaptation. The total for this element is \$ C150000 M.
 
 \subsection*{Cost Category 16 – Plant Reports}
 This Cost Category includes costs associated with production of major reports such as an environmental impact statement or the safety analysis report, usually in the range of \$ 500,000 to \$ 5 M. Comprehensive site evaluations, especially in environmentally sensitive areas, can be expensive. The total for this element is \$ C160000 M.

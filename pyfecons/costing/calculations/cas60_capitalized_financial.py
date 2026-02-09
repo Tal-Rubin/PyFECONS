@@ -1,4 +1,5 @@
 from pyfecons.costing.accounting.power_table import PowerTable
+from pyfecons.costing.calculations.financials import total_project_time
 from pyfecons.costing.categories.cas200000 import CAS20
 from pyfecons.costing.categories.cas600000 import CAS60
 from pyfecons.inputs.basic import Basic
@@ -42,9 +43,11 @@ def cas60_capitalized_financial_costs(
 
     # C_97_sens = costfac90 * (C_90 + C_96 + C_94 + C_93 + C_92 + C_91);
     # (/1e6)/A_power * A_C_97; %Interest during Construction (IDC)  Table 3.2-X of Ref. [1]
-    cas60.C630000 = M_USD(
-        power_table.p_net * constants.idc_coeff * basic.construction_time
+    # IDC accrues over the full project timeline (licensing + construction).
+    t_project = total_project_time(
+        basic.construction_time, basic.fuel_type, constants, noak=basic.noak
     )
+    cas60.C630000 = M_USD(power_table.p_net * constants.idc_coeff * t_project)
 
     cas60.C600000 = M_USD(cas60.C630000 + cas60.C610000)
     return cas60

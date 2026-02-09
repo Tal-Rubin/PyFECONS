@@ -4,8 +4,7 @@ import numpy as np
 
 from pyfecons.costing.accounting.power_table import PowerTable
 from pyfecons.costing.categories.cas100000 import CAS10
-from pyfecons.costing.safety.licensing import licensing_safety_addon
-from pyfecons.enums import Region
+from pyfecons.enums import FuelType, Region
 from pyfecons.inputs.basic import Basic
 from pyfecons.inputs.costing_constants import CostingConstants
 from pyfecons.inputs.tritium_release import TritiumRelease
@@ -13,6 +12,19 @@ from pyfecons.units import M_USD
 
 # Conversion from square meters to acres.
 M2_TO_ACRES = 0.000247105
+
+
+def _get_licensing_cost(fuel_type: FuelType, constants: CostingConstants) -> M_USD:
+    """Select licensing cost based on fuel type."""
+    if fuel_type == FuelType.DT:
+        return constants.licensing_dt
+    elif fuel_type == FuelType.DD:
+        return constants.licensing_dd
+    elif fuel_type == FuelType.DHE3:
+        return constants.licensing_dhe3
+    elif fuel_type == FuelType.PB11:
+        return constants.licensing_pb11
+    return constants.licensing_dt  # default to D-T (most conservative)
 
 
 def _compute_tritium_land_addon(
@@ -131,16 +143,21 @@ def cas_10_pre_construction_costs(
     cas10.C120000 = constants.site_permits
 
     # Cost Category 13 – Plant Licensing
-    # Base cost from 'Capital Costs' section of
-    # https://world-nuclear.org/information-library/economic-aspects/economics-of-nuclear-power.aspx
-    # Safety and hazard mitigation addon (region-dependent, applied when enabled)
-    cas10.C130000 = constants.licensing + licensing_safety_addon(basic)
+    # Cost varies by fuel type under NRC Part 30 framework (2025 update).
+    # Includes safety analysis, radiation protection, emergency planning,
+    # and waste management costs appropriate to each fuel type.
+    cas10.C130000 = _get_licensing_cost(basic.fuel_type, constants)
 
     # Cost Category 14 – Plant Permits
     cas10.C140000 = constants.plant_permits
 
     # Cost Category 15 – Plant Studies
-    cas10.C150000 = constants.plant_studies
+    # FOAK requires full engineering feasibility, safety case, technology qualification.
+    # NOAK reuses established designs with site-specific adaptation only.
+    if basic.noak:
+        cas10.C150000 = constants.plant_studies_noak
+    else:
+        cas10.C150000 = constants.plant_studies_foak
 
     # Cost Category 16 – Plant Reports
     cas10.C160000 = constants.plant_reports

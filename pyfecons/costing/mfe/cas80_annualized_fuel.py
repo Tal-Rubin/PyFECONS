@@ -1,10 +1,18 @@
 from pyfecons.costing.calculations.conversions import to_m_usd
+from pyfecons.costing.calculations.financials import (
+    levelized_annual_cost,
+    total_project_time,
+)
 from pyfecons.costing.categories.cas800000 import CAS80
 from pyfecons.inputs.basic import Basic
+from pyfecons.inputs.costing_constants import CostingConstants
+from pyfecons.inputs.financial import Financial
 from pyfecons.units import Kilograms
 
 
-def cas80_annualized_fuel_costs(basic: Basic) -> CAS80:
+def cas80_annualized_fuel_costs(
+    basic: Basic, financial: Financial, constants: CostingConstants
+) -> CAS80:
     # Cost Category 80: Annualized Fuel Cost (AFC)
     cas80 = CAS80()
 
@@ -29,5 +37,13 @@ def cas80_annualized_fuel_costs(basic: Basic) -> CAS80:
         / (17.58 * 1.6021e-13)
     )
 
-    cas80.C800000 = to_m_usd(c_f)
+    cas80.C800000 = levelized_annual_cost(
+        annual_cost=to_m_usd(c_f),
+        interest_rate=float(financial.interest_rate),
+        inflation_rate=float(basic.yearly_inflation),
+        plant_lifetime=float(basic.plant_lifetime),
+        construction_time=total_project_time(
+            basic.construction_time, basic.fuel_type, constants, noak=basic.noak
+        ),
+    )
     return cas80
