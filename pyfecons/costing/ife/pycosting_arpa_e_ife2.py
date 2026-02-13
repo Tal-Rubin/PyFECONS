@@ -213,14 +213,14 @@ def round_to_2(x):
 PNRL = 2500
 if fuelType == "pB11" or "DD":
   # Charged particle power
-  PALPHA = PNRL
+  PASH = PNRL
   # Neutron power
   PNEUTRON = 0
 else:
   # Charged particle power
-  PALPHA = PNRL * 3.52 / 17.58
+  PASH = PNRL * 3.52 / 17.58
   # Neutron power
-  PNEUTRON = PNRL - PALPHA
+  PNEUTRON = PNRL - PASH
 
 # Neutron energy multiplier
 MN = 1.09
@@ -251,7 +251,7 @@ PIGNITION = 0.1
 # Input power
 PIN = PIMPLOSION + PIGNITION
 # Thermal power
-PTH = MN * PNEUTRON + PALPHA + PIN + ETATH * (FPCPPF* ETAP + FSUB) * (MN * PNEUTRON + PALPHA)
+PTH = MN * PNEUTRON + PASH + PIN + ETATH * (FPCPPF* ETAP + FSUB) * (MN * PNEUTRON + PASH)
 # Total (Gross) Electric Power
 PET = ETATH * PTH
 # Lost Power
@@ -269,7 +269,7 @@ PSUB = FSUB * PET
 # Scientific Q
 QS = PNRL / PIN
 # Engineering Q
-QE = ETATH * (MN * PNEUTRON + PALPHA + PP + PIN) / (PTARGET + PP + PSUB + PAUX + PCRYO + PIMPLOSION / ETAPIN1 + PIGNITION / ETAPIN2)
+QE = ETATH * (MN * PNEUTRON + PASH + PP + PIN) / (PTARGET + PP + PSUB + PAUX + PCRYO + PIMPLOSION / ETAPIN1 + PIGNITION / ETAPIN2)
 # Recirculating power fraction
 EPSILON = 1 / QE
 # Output Power (Net Electric Power)
@@ -277,7 +277,7 @@ PNET = (1 - 1 / QE) * PET
 
 
 PT_dict = {
-    'PNRL': PNRL, 'PALPHA': PALPHA, 'PNEUTRON': PNEUTRON, 'MN': MN,  'FPCPPF': FPCPPF,
+    'PNRL': PNRL, 'PASH': PASH, 'PNEUTRON': PNEUTRON, 'MN': MN,  'FPCPPF': FPCPPF,
     'FSUB': FSUB, 'PTRIT': PTRIT, 'PHOUSE': PHOUSE, 'PAUX': PAUX, 'PCRYO': PCRYO, 'ETAPIN1': ETAPIN1,
     'ETAPIN2': ETAPIN2, 'ETAP': ETAP, 'ETATH': ETATH, 'PIMPLOSION': PIMPLOSION, 'PIGNITION': PIGNITION,
      'PTH': PTH, 'PET': PET, 'PLOSS': PLOSS, 'GAINE': GAINE, 'PTARGET': PTARGET,

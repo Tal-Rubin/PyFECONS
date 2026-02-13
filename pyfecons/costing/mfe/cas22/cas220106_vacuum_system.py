@@ -1,3 +1,5 @@
+from typing import TYPE_CHECKING, Optional
+
 import numpy as np
 
 from pyfecons.costing.accounting.power_table import PowerTable
@@ -15,6 +17,9 @@ from pyfecons.inputs.radial_build import RadialBuild
 from pyfecons.inputs.vacuum_system import VacuumSystem
 from pyfecons.units import M_USD, USD, Kilograms, Meters3
 
+if TYPE_CHECKING:
+    from pyfecons.inputs.costing_constants import VacuumSystemConstants
+
 
 # MFE vacuum system calculations
 def cas_220106_vacuum_system_costs(
@@ -23,7 +28,26 @@ def cas_220106_vacuum_system_costs(
     coils: Coils,
     power_table: PowerTable,
     cas220101: CAS220101,
+    constants: Optional["VacuumSystemConstants"] = None,
 ) -> CAS220106:
+    """Calculate CAS 22.01.06 Vacuum System costs.
+
+    Args:
+        vacuum_system: Vacuum system configuration
+        radial_build: Radial build parameters
+        coils: Coil configuration
+        power_table: Power table data
+        cas220101: Reactor equipment data
+        constants: Optional configurable vacuum system parameters. Uses defaults if None.
+
+    Returns:
+        CAS220106 with calculated costs
+    """
+    # Use provided constants or default values for backward compatibility
+    if constants is None:
+        from pyfecons.inputs.costing_constants import VacuumSystemConstants
+
+        constants = VacuumSystemConstants()
     # 22.1.6 Vacuum system
     cas220106 = CAS220106()
     build = cas220101
@@ -118,8 +142,12 @@ def cas_220106_vacuum_system_costs(
 
     # Calculate new contingency and prime contractor fee based on updated total cost
     total_cost = cas220106.vessel_costs.total.total_cost
-    cas220106.vessel_costs.contingency.total_cost = total_cost * 0.20  # 20%
-    cas220106.vessel_costs.prime_contractor_fee.total_cost = total_cost * 0.12  # 12%
+    cas220106.vessel_costs.contingency.total_cost = (
+        total_cost * constants.contingency_rate
+    )
+    cas220106.vessel_costs.prime_contractor_fee.total_cost = (
+        total_cost * constants.prime_contractor_fee
+    )
 
     # Update the total subsystem cost
     cas220106.vessel_costs.total_subsystem_cost.total_cost = (
@@ -138,9 +166,9 @@ def cas_220106_vacuum_system_costs(
     )
 
     # COOLING 22.1.3.2
-    # INPUTS
-    T_op = 20  # Operating temerature of magnets
-    T_env = 300  # Temperature of environment (to be cooled from)
+    # Operating temperature of magnets and environment temperature from constants
+    T_op = float(constants.t_magnet_operating)
+    T_env = float(constants.t_environment)
 
     def calc_torus_sa(min_r: float, maj_r: float):
         return 4 * np.pi**2 * maj_r * min_r
@@ -170,9 +198,10 @@ def cas_220106_vacuum_system_costs(
     cas220106.C22010603 = to_m_usd(no_vpumps * vacuum_system.cost_pump)
 
     # ROUGHING PUMP 22.1.6.4
-    # from STARFIRE, only 1 needed
-    # TODO where do these constants come from?
-    cas220106.C22010604 = to_m_usd(120000 * 2.85)
+    # from STARFIRE reference, only 1 needed
+    cas220106.C22010604 = to_m_usd(
+        constants.roughing_pump_base_cost * constants.roughing_pump_factor
+    )
 
     cas220106.C220106 = M_USD(
         cas220106.C22010601

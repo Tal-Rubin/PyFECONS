@@ -78,6 +78,7 @@ from pyfecons.costing.calculations.cas90_annualized_financial import (
 )
 from pyfecons.costing.calculations.lcoe import lcoe_costs
 from pyfecons.costing.calculations.npv import calculate_npv
+from pyfecons.costing.calculations.power_balance import power_balance
 from pyfecons.costing.ife.cas22.cas220103_lasers import cas_220103_laser_costs
 from pyfecons.costing.ife.cas22.cas220104_ignition_lasers import (
     cas_220104_ignition_laser_costs,
@@ -92,7 +93,6 @@ from pyfecons.costing.ife.cas22.cas220108_target_factory import (
     cas_220108_target_factory_costs,
 )
 from pyfecons.costing.ife.cas80_annualized_fuel import cas80_annualized_fuel_costs
-from pyfecons.costing.ife.PowerBalance import power_balance
 from pyfecons.costing.safety.insurance import cas_780000_insurance_costs
 from pyfecons.costing_data import CostingData
 from pyfecons.enums import FusionMachineType

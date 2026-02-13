@@ -1,6 +1,99 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
-from pyfecons.units import M_USD, MW, Ratio, Unknown
+from pyfecons.units import M_USD, MW, USD, K, Meters, Ratio, Unknown
+
+
+@dataclass
+class InflationFactors:
+    """Historical inflation adjustment factors from https://www.usinflationcalculator.com/
+
+    These factors convert historical USD values to target year (default: 2024).
+    Update these values when recalibrating to a new base year.
+    """
+
+    target_year: int = 2024
+    factor_1992: Ratio = Ratio(2.26)
+    factor_2005: Ratio = Ratio(1.58)
+    factor_2009: Ratio = Ratio(1.43)
+    factor_2019: Ratio = Ratio(1.22)
+    eur_to_usd_rate: Ratio = Ratio(0.920015)
+    exchange_rate_date: str = "2024-10-20"
+
+
+@dataclass
+class InstallationConstants:
+    """Constants for CAS 22.01.11 installation cost calculations.
+
+    Labor multipliers define the relative installation effort for each subsystem.
+    Formula: cost = n_mod * labor_rate * multiplier * construction_workers
+    """
+
+    # Construction worker calculation: workers = base * axis_ir / divisor
+    construction_worker_base: Ratio = Ratio(20)
+    construction_worker_divisor: Ratio = Ratio(4)
+
+    # Installation labor multipliers by subsystem
+    base_multiplier: Ratio = Ratio(300)
+    first_wall_blanket_multiplier: Ratio = Ratio(200)
+    shield_multiplier: Ratio = Ratio(150)
+    coils_multiplier: Ratio = Ratio(100)
+    supplementary_heating_multiplier: Ratio = Ratio(30)
+    primary_structure_multiplier: Ratio = Ratio(60)
+    vacuum_system_multiplier: Ratio = Ratio(200)
+    power_supplies_multiplier: Ratio = Ratio(400)
+    direct_energy_converter_multiplier: Ratio = Ratio(200)
+
+
+@dataclass
+class SpecialMaterialsConstants:
+    """Constants for CAS 27 special materials calculations.
+
+    Note: flibe_cost_factor (2130) vs helium_cost_factor (2.13) is intentional.
+    FliBe is a complex molten salt requiring enrichment, while helium is a commodity gas.
+    """
+
+    # Coolant cost factors (USD/kg equivalent)
+    flibe_cost_factor: Ratio = Ratio(2130)
+    helium_cost_factor: Ratio = Ratio(2.13)
+    lithium_cost_factor: Ratio = Ratio(50)
+    water_cost_factor: Ratio = Ratio(1)
+
+    # Lithium isotope fraction for PbLi calculations
+    f_6Li: Ratio = Ratio(0.1)
+
+    # Lead fraction in PbLi eutectic
+    FPCPPFb: Ratio = Ratio(0.9)
+
+    # Other materials cost factors
+    other_materials_factor: Ratio = Ratio(0.41)
+    cover_gas_factor: Ratio = Ratio(0.21)
+    materials_adjustment: Ratio = Ratio(1.71)
+
+
+@dataclass
+class DivertorConstants:
+    """Constants for CAS 22.01.08 divertor cost calculations (MFE only)."""
+
+    thickness_z: Meters = Meters(0.5)
+    complexity_factor: Ratio = Ratio(3)
+    volume_fraction: Ratio = Ratio(0.2)
+
+
+@dataclass
+class VacuumSystemConstants:
+    """Constants for CAS 22.01.06 vacuum system calculations."""
+
+    # Thermal boundary conditions
+    t_magnet_operating: K = K(20)
+    t_environment: K = K(300)
+
+    # Cost contingencies
+    contingency_rate: Ratio = Ratio(0.20)
+    prime_contractor_fee: Ratio = Ratio(0.12)
+
+    # Roughing pump costs (from STARFIRE reference)
+    roughing_pump_base_cost: USD = USD(120000)
+    roughing_pump_factor: Ratio = Ratio(2.85)
 
 
 @dataclass
@@ -100,3 +193,12 @@ class CostingConstants:
 
     # CAS 70: O&M cost ($/MW/year)
     om_cost_per_mw_per_year: Unknown = Unknown(60)
+
+    # Nested constants for specific subsystems
+    inflation: InflationFactors = field(default_factory=InflationFactors)
+    installation: InstallationConstants = field(default_factory=InstallationConstants)
+    special_materials: SpecialMaterialsConstants = field(
+        default_factory=SpecialMaterialsConstants
+    )
+    divertor: DivertorConstants = field(default_factory=DivertorConstants)
+    vacuum_system: VacuumSystemConstants = field(default_factory=VacuumSystemConstants)

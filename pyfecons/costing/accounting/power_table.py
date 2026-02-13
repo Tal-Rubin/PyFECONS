@@ -7,8 +7,10 @@ from pyfecons.units import MW, Ratio, Unknown
 class PowerTable:
     """Power table data."""
 
-    p_alpha: MW = None  # Charged particle power
+    p_ash: MW = None  # Charged fusion product power (alphas, protons, tritons, He-3)
     p_neutron: MW = None  # Neutron power
+    p_wall: MW = None  # Ash thermal power deposited on walls (-> thermal cycle)
+    p_dec_waste: MW = None  # DEC waste heat (separately cooled, lost)
     p_cool: MW = None
     p_aux: MW = None  # Auxiliary systems
     p_coils: MW = None

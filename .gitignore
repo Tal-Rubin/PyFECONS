@@ -18,4 +18,5 @@ customers/**
 !customers/CATF/
 .Rproj.user
 
-temp/
+temp/uv.lock
+uv.lock

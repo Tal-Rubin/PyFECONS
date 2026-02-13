@@ -15,12 +15,13 @@ import argparse
 import os
 import sys
 from copy import deepcopy
-from dataclasses import fields
-from typing import Dict, Tuple
+from dataclasses import fields, is_dataclass
+from typing import Dict, List, Tuple
 
 import pandas as pd
 
 from pyfecons import RunCosting
+from pyfecons.costing_data import CostingData
 from pyfecons.inputs.all_inputs import AllInputs
 
 
@@ -50,6 +51,116 @@ def get_scalar_leaves(obj, prefix: str = "") -> Dict[str, Tuple]:
                 leaves.update(nested)
 
     return leaves
+
+
+# Mapping of CAS category codes to human-readable names
+CAS_CATEGORY_NAMES = {
+    # CAS 10 - Pre-construction
+    "C100000": "CAS 10: Pre-construction Total",
+    "C110000": "CAS 11: Land and Land Rights",
+    "C120000": "CAS 12: Site Permits",
+    "C130000": "CAS 13: Plant Licensing",
+    "C140000": "CAS 14: Plant Permits",
+    "C150000": "CAS 15: Plant Studies",
+    "C160000": "CAS 16: Plant Reports",
+    "C170000": "CAS 17: Other Pre-construction",
+    # CAS 21 - Buildings
+    "C210000": "CAS 21: Structures & Improvements Total",
+    "C210100": "CAS 21.01: Site Improvements",
+    "C210200": "CAS 21.02: Fusion Heat Island Building",
+    "C210300": "CAS 21.03: Turbine Building",
+    "C210400": "CAS 21.04: Heat Exchanger Building",
+    "C210500": "CAS 21.05: Power Supply Building",
+    "C210600": "CAS 21.06: Reactor Auxiliaries Building",
+    "C210700": "CAS 21.07: Hot Cell Building",
+    "C210800": "CAS 21.08: Reactor Services Building",
+    "C210900": "CAS 21.09: Service Water Building",
+    "C211000": "CAS 21.10: Fuel Storage Building",
+    "C211100": "CAS 21.11: Control Room Building",
+    "C211500": "CAS 21.15: Cryogenics Building",
+    "C211800": "CAS 21.18: Isotope Separation Plant",
+    # CAS 22 - Reactor Equipment
+    "C220000": "CAS 22: Reactor Equipment Total",
+    "C220100": "CAS 22.01: Reactor Equipment Subtotal",
+    "C220101": "CAS 22.01.01: First Wall & Blanket",
+    "C220102": "CAS 22.01.02: Shield",
+    "C220103": "CAS 22.01.03: Coils/Lasers",
+    "C220104": "CAS 22.01.04: Supplementary Heating",
+    "C220105": "CAS 22.01.05: Primary Structure",
+    "C220106": "CAS 22.01.06: Vacuum System",
+    "C220107": "CAS 22.01.07: Power Supplies",
+    "C220108": "CAS 22.01.08: Divertor/Target Factory",
+    "C220109": "CAS 22.01.09: Direct Energy Converter",
+    "C220111": "CAS 22.01.11: Installation",
+    "C220112": "CAS 22.01.12: Isotope Separation",
+    "C220119": "CAS 22.01.19: Replacement Equipment",
+    "C220120": "CAS 22.01.20: Safety Systems",
+    "C220200": "CAS 22.02: Heat Transport",
+    "C220300": "CAS 22.03: Auxiliary Cooling",
+    "C220400": "CAS 22.04: Radioactive Waste",
+    "C220500": "CAS 22.05: Fuel Handling & Storage",
+    "C220600": "CAS 22.06: Other Plant Equipment",
+    "C220700": "CAS 22.07: Instrumentation & Control",
+    # CAS 23-29
+    "C230000": "CAS 23: Turbine Plant Equipment",
+    "C240000": "CAS 24: Electric Plant Equipment",
+    "C250000": "CAS 25: Miscellaneous Plant Equipment",
+    "C260000": "CAS 26: Heat Rejection System",
+    "C270000": "CAS 27: Special Materials",
+    "C280000": "CAS 28: Digital Twin",
+    "C290000": "CAS 29: Contingency",
+    # CAS 20 Total
+    "C200000": "CAS 20: Direct Costs Total",
+    # CAS 30-90
+    "C300000": "CAS 30: Indirect Service Costs",
+    "C400000": "CAS 40: Capitalized Owner Costs",
+    "C500000": "CAS 50: Supplementary Costs",
+    "C600000": "CAS 60: Interest During Construction",
+    "C700000": "CAS 70: O&M Costs (Annualized)",
+    "C800000": "CAS 80: Annualized Fuel Cost",
+    "C900000": "CAS 90: Total Capital Cost",
+}
+
+
+def get_capital_cost_categories(costing: CostingData) -> List[Tuple[str, str, float]]:
+    """
+    Extract all capital cost categories from CostingData.
+
+    Returns:
+        List of tuples: (category_code, category_name, cost_value_m_usd)
+        sorted by cost value descending.
+    """
+    costs = []
+
+    def extract_costs(obj, prefix: str = ""):
+        """Recursively extract cost fields from dataclasses."""
+        if obj is None:
+            return
+
+        if is_dataclass(obj):
+            for fld in fields(obj):
+                field_val = getattr(obj, fld.name)
+                if field_val is None:
+                    continue
+
+                # Check if this is a cost field (starts with 'C' followed by digits)
+                if fld.name.startswith("C") and fld.name[1:].isdigit():
+                    if isinstance(field_val, (int, float)) and field_val > 0:
+                        category_name = CAS_CATEGORY_NAMES.get(
+                            fld.name, f"CAS {fld.name}"
+                        )
+                        costs.append((fld.name, category_name, float(field_val)))
+                elif is_dataclass(field_val) and fld.name.startswith("cas"):
+                    # Recurse into CAS category dataclasses
+                    extract_costs(field_val, fld.name)
+
+    # Extract from all CAS categories in CostingData
+    extract_costs(costing)
+
+    # Sort by cost value descending
+    costs.sort(key=lambda x: x[2], reverse=True)
+
+    return costs
 
 
 def sensitivity_analysis(baseline_inputs: AllInputs, delta_frac: float = 0.01) -> Dict:
@@ -142,6 +253,7 @@ def sensitivity_analysis(baseline_inputs: AllInputs, delta_frac: float = 0.01) -
         "lcoe_baseline": lcoe_baseline,
         "derivatives": derivatives,
         "sorted_by_elasticity": sorted_derivs,
+        "baseline_costing": baseline_costing,
     }
 
 
@@ -204,7 +316,26 @@ def save_results_to_excel(
         # Sheet 3: Top 20 most sensitive
         top20_data = all_data[:20]
         top20_df = pd.DataFrame(top20_data)
-        top20_df.to_excel(writer, sheet_name="Top 20", index=False)
+        top20_df.to_excel(writer, sheet_name="Top 20 Sensitive", index=False)
+
+        # Sheet 4: Top 20 Capital Expenses
+        if "baseline_costing" in results and results["baseline_costing"] is not None:
+            capital_costs = get_capital_cost_categories(results["baseline_costing"])
+            top20_capital = capital_costs[:20]
+
+            capital_data = []
+            for rank, (code, name, value) in enumerate(top20_capital, 1):
+                capital_data.append(
+                    {
+                        "Rank": rank,
+                        "Category Code": code,
+                        "Category Name": name,
+                        "Cost (M$)": value,
+                    }
+                )
+
+            capital_df = pd.DataFrame(capital_data)
+            capital_df.to_excel(writer, sheet_name="Top 20 Capital Costs", index=False)
 
         # Auto-fit columns for all sheets
         for sheet_name in writer.sheets:
@@ -311,7 +442,7 @@ if __name__ == "__main__":
                     f"\n{i}. {path}\n"
                     f"   Baseline value:        {baseline_val:.6f}\n"
                     f"   ∂(LCOE)/∂:            {deriv:+.6f}\n"
-                    f"   Elasticity:           {elasticity:+.4f}  ← RANKING METRIC\n"
+                    f"   Elasticity:           {elasticity:+.4f}\n"
                     f"   |Elasticity|:         {abs(elasticity):.4f}"
                 )
 

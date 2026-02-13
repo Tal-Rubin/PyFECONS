@@ -56,16 +56,14 @@ def Generate() -> AllInputs:
             mn=Ratio(1.1),
             eta_p=Percent(0.5),
             eta_th=Percent(0.46),
-            fpcppf=Percent(0.06),
             p_trit=MW(10),
             p_house=MW(4),
-            p_tfcool=MW(12.7),
-            p_pfcool=MW(1),
-            p_tf=MW(1),
-            p_pf=MW(1),
+            p_cool=MW(13.7),  # Coil cooling (TF 12.7 + PF 1.0)
+            p_coils=MW(2),  # Power into coils (TF 1.0 + PF 1.0)
             eta_pin=Percent(0.5),
             eta_pin1=Percent(0.18),
             eta_pin2=Percent(0.82),
+            f_dec=Percent(0),  # DEC capture fraction (0 = no DEC)
             eta_de=Percent(0.85),
             p_input=MW(50),
         ),

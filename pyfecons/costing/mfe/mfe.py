@@ -78,6 +78,7 @@ from pyfecons.costing.calculations.cas90_annualized_financial import (
 )
 from pyfecons.costing.calculations.lcoe import lcoe_costs
 from pyfecons.costing.calculations.npv import calculate_npv
+from pyfecons.costing.calculations.power_balance import power_balance
 from pyfecons.costing.mfe.cas22.cas220103_coils import cas_220103_coils
 from pyfecons.costing.mfe.cas22.cas220104_supplementary_heating import (
     cas_220104_supplementary_heating_costs,
@@ -90,7 +91,6 @@ from pyfecons.costing.mfe.cas22.cas220107_power_supplies import (
 )
 from pyfecons.costing.mfe.cas22.cas220108_divertor import cas_220108_divertor_costs
 from pyfecons.costing.mfe.cas80_annualized_fuel import cas80_annualized_fuel_costs
-from pyfecons.costing.mfe.PowerBalance import power_balance
 from pyfecons.costing.safety.disruption_mitigation import (
     cas_220120_disruption_mitigation_costs,
 )

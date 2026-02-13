@@ -5,6 +5,67 @@
 
 ---
 
+## Power Balance Rework (2026-02-11 – 2026-02-12)
+
+### Thermal Power Model Fix
+- **Issue**: `p_th` only counted neutron blanket heating (`mn * p_nrl`), completely missing charged particle wall heating, input heating, and pump heat recovery. This underestimated thermal power for ALL fuels: DT by ~19%, DD/DHe3 significantly, and p-B11 was completely broken (100% charged particles, zero thermal power).
+- **Fix**: Corrected formula to `p_th = mn * p_neutron + p_ash_thermal + p_input + eta_p * p_pump`. Each term: neutron blanket multiplication, charged particle wall deposition, plasma heating power, and recovered pump heat.
+
+### Fuel-Dependent Ash/Neutron Split
+- **Issue**: `compute_p_alpha` treated DD as pure DD (ignoring secondary DT/DHe3 burns from ash). Real DD plasmas are naturally semi-catalyzed — tritium ash burns with D (~97% burn fraction), He-3 ash burns with D (~69% burn fraction).
+- **Fix**: Created `fuel_physics.py` with `compute_ash_neutron_split()`. Renamed p_alpha → p_ash throughout. Fuel models:
+  - **DT**: 3.52/17.58 = 20.02% charged
+  - **DD**: Semi-catalyzed model parametrized by `dd_f_T` (~0.969) and `dd_f_He3` (~0.689). With defaults: ~56.5% charged.
+  - **DHe3**: Primary D-He3 is 100% charged, but ~7% of energy comes from unavoidable D-D side reactions producing some neutrons. Parametrized by `dhe3_dd_frac` (~0.07), `dhe3_f_T` (~0.97). With defaults: ~95.4% charged.
+  - **p-B11**: 100% charged (aneutronic)
+- **Default burn fractions**: Single source of truth in `fuel_physics.py` function parameter defaults. `power_balance.py` passes through only non-None customer overrides via `**kwargs`.
+- **Reference**: `20260211-dd-steady-state-burn-analysis.md`
+
+### Direct Energy Conversion (DEC) Support
+- **Feature**: Added DEC routing for MFE: `f_dec` fraction of ash power goes to direct energy converter. `eta_de` fraction becomes electricity (`p_dee`), remainder is waste heat (`p_dec_waste`). Remaining `(1 - f_dec)` ash thermalizes on the wall.
+- **Impact**: When `f_dec = 0` (default), all ash thermalizes through thermal cycle — backward compatible.
+- **Fields**: `f_dec` (capture fraction), `eta_de` (conversion efficiency), `p_dee` (DEC electric), `p_dec_waste` (DEC waste heat)
+
+### p_sub Formula Fix
+- **Issue**: `p_sub = f_sub * p_the` (thermal electric only). Templates documented `f_sub * P_ET` (gross electric). These differ when DEC is enabled.
+- **Fix**: Changed to `p_sub = f_sub * p_et` to match template documentation.
+
+### p_loss Formula Fix
+- **Issue**: `p_loss = p_th - p_the` only counted thermal cycle rejection, missing DEC waste heat.
+- **Fix**: Changed to `p_loss = (p_th - p_the) + p_dec_waste`.
+
+### PowerInput Cleanup
+- **Removed fields**: `fpcppf` (orphaned after p_pump became direct MW input), `p_machinery` (never used in calculations), `p_tf`/`p_pf` (always summed to p_coils), `p_tfcool`/`p_pfcool` (always summed to p_cool)
+- **Added fields**: `p_coils` (was p_tf + p_pf), `p_cool` (was p_tfcool + p_pfcool), `p_pump` (direct MW input), `f_dec`, `dd_f_T`, `dd_f_He3`, `dhe3_dd_frac`, `dhe3_f_T`
+- **Deleted files**: MFE/IFE `PowerBalance.py` wrappers (unified into single `power_balance.py`)
+
+### LaTeX Template Updates
+- **MFE templates** (standard + lite): Fixed `M_N` display (was incorrectly showing `M_N = P_TH/P_fusion`), added explicit p_th formula, removed stale per-coil breakdown rows
+- **IFE non-lite template**: Converted from hardcoded values to placeholder tokens (was non-functional for replacements), removed stale Machinery and fpcppf rows
+- **IFE lite template**: Fixed `M_N` display, added pump capture efficiency row, fixed numbering gap
+- **Fuel-dependent ash split text**: All 4 templates now use an `ASHSPLITTEXT` placeholder that generates a fuel-type-specific subsection explaining the charged particle / neutron power split (reaction channels, burn fractions, ash fraction) for the selected fuel only
+- **Report section** (`power_table_section.py`): Updated replacement keys to match new templates, added `_ash_split_text()` function generating fuel-specific LaTeX for DT, DD, DHe3, and p-B11
+
+### Customer File Updates
+- **CATF MFE**: Consolidated `p_tf + p_pf → p_coils=MW(2)`, `p_tfcool + p_pfcool → p_cool=MW(13.7)`, removed `fpcppf`, added `f_dec=Percent(0)`
+- **CATF IFE**: Removed `fpcppf`, `p_machinery`
+
+### Files Changed
+- `pyfecons/costing/calculations/fuel_physics.py` (new)
+- `pyfecons/costing/calculations/power_balance.py` (rewritten)
+- `pyfecons/inputs/power_input.py`
+- `pyfecons/costing/accounting/power_table.py`
+- `pyfecons/report/sections/power_table_section.py`
+- `pyfecons/costing/mfe/templates/powerTableMFEDT.tex`
+- `pyfecons/costing/mfe/templates/lite/powerTableMFEDT.tex`
+- `pyfecons/costing/ife/templates/powerTableIFEDT.tex`
+- `pyfecons/costing/ife/templates/lite/powerTableIFEDT.tex`
+- `customers/CATF/mfe/DefineInputs.py`
+- `customers/CATF/ife/DefineInputs.py`
+- Deleted: `pyfecons/costing/mfe/PowerBalance.py`, `pyfecons/costing/ife/PowerBalance.py`
+
+---
+
 ## CAS 220101: Fuel-Type-Aware First Wall Material Selection (2026-02-09)
 
 ### First Wall Material Automatically Chosen Based on Fuel Type

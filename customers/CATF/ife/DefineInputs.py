@@ -56,7 +56,6 @@ def Generate() -> AllInputs:
         power_input=PowerInput(
             mn=Ratio(1.09),  # Neutron energy multiplier
             eta_p=Percent(0.5),  # Pumping power capture efficiency
-            fpcppf=Percent(0.01),  # Primary Coolant Pumping Power Fraction
             f_sub=Percent(0.01),  # Subsystem and Control Fraction
             p_trit=MW(6.3),  # Tritium Systems
             p_house=MW(4 * 300 / 560),  # Housekeeping power,
@@ -68,7 +67,6 @@ def Generate() -> AllInputs:
             p_ignition=p_ignition,
             p_input=MW(p_implosion + p_ignition),  # Input power
             p_target=MW(1),  # Power into target factory
-            p_machinery=MW(1),  # Power into machinery
         ),
         radial_build=RadialBuild(
             # Radial thicknesses of concentric components (innermost to outermost)

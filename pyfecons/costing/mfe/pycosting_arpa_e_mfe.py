@@ -231,16 +231,16 @@ inflation_factor_2019_2024= 1.22
 #MCF
 PNRL = 2600  # Fusion Power
 if fuelType == "DT":
-  PALPHA = PNRL * 3.52 / 17.58  # Charged particle power in DT reaction - from ratio of total energy for DT (https://en.wikipedia.org/wiki/Nuclear_fusion)
+  PASH = PNRL * 3.52 / 17.58  # Charged particle power in DT reaction - from ratio of total energy for DT (https://en.wikipedia.org/wiki/Nuclear_fusion)
 elif fuelType == "DD":
-  PALPHA = PNRL * (0.5*3.02 / (3.02+1.01)+ 0.5*0.82/(0.82+2.45))  # Charged particle power in DD reaction - from ratio of total energy for DT (https://en.wikipedia.org/wiki/Nuclear_fusion)
+  PASH = PNRL * (0.5*3.02 / (3.02+1.01)+ 0.5*0.82/(0.82+2.45))  # Charged particle power in DD reaction - from ratio of total energy for DT (https://en.wikipedia.org/wiki/Nuclear_fusion)
 elif fuelType == "DHe3":
-    PALPHA = PNRL * 14.7 / (14.7+3.6)  # Charged particle power in DHe3 reaction - from ratio of total energy for DT (https://en.wikipedia.org/wiki/Nuclear_fusion)
+    PASH = PNRL * 14.7 / (14.7+3.6)  # Charged particle power in DHe3 reaction - from ratio of total energy for DT (https://en.wikipedia.org/wiki/Nuclear_fusion)
 elif fuelType == "pB11":
-    PALPHA = PNRL * 8.7/8.7  # Charged particle power in pB11 reaction - from ratio of total energy for DT (https://en.wikipedia.org/wiki/Nuclear_fusion)
+    PASH = PNRL * 8.7/8.7  # Charged particle power in pB11 reaction - from ratio of total energy for DT (https://en.wikipedia.org/wiki/Nuclear_fusion)
 
 
-PNEUTRON = PNRL - PALPHA  # Neutron power
+PNEUTRON = PNRL - PASH  # Neutron power
 MN = 1.1  # Neutron energy multiplier
 ETAP = 0.5  # Pumping power capture efficiency
 FPCPPF = 0.06  # Primary Coolant Pumping Power Fraction
@@ -263,19 +263,19 @@ PAUX = PTRIT + PHOUSE
 PCOILS = PTF + PPF
 PTH = MN * PNEUTRON  + PINPUT + ETATH * (FPCPPF * ETAP + FSUB) * (MN * PNEUTRON)
 PTHE = ETATH*PTH #Total thermal electric power
-PDEE = ETADE*PALPHA
+PDEE = ETADE*PASH
 PET = PDEE+PTHE #Gross electric
 PLOSS = PTH - PTHE-PDEE
 PPUMP = FPCPPF * PTHE
 PSUB = FSUB * PTHE
 QSCI =  PNRL/ PINPUT
-QENG = (ETATH * (MN * PNEUTRON + PPUMP + PINPUT)+ETADE*PALPHA) / (PCOILS + PPUMP + PSUB + PAUX + PCOOL+PCRYO + PINPUT / ETAPIN)
+QENG = (ETATH * (MN * PNEUTRON + PPUMP + PINPUT)+ETADE*PASH) / (PCOILS + PPUMP + PSUB + PAUX + PCOOL+PCRYO + PINPUT / ETAPIN)
 REFRAC = 1 / QENG
 PNET = (1 - 1 / QENG) * PET
 
 
 PT_dict = {
-    'PNRL': PNRL, 'PALPHA': PALPHA, 'PNEUTRON': PNEUTRON, 'MN': MN, 'ETAPIN': ETAPIN,
+    'PNRL': PNRL, 'PASH': PASH, 'PNEUTRON': PNEUTRON, 'MN': MN, 'ETAPIN': ETAPIN,
     'FPCPPF': FPCPPF, 'FSUB': FSUB, 'PTRIT': PTRIT, 'PHOUSE': PHOUSE, 'PTFCOOL': PTFCOOL, 'PPFCOOL': PPFCOOL,'PCOOL': PCOOL,
     'PINPUT': PINPUT, 'PTF': PTF, 'PPF': PPF, 'ETAP': ETAP, 'ETATH': ETATH, 'PAUX': PAUX,
     'PCRYO': PCRYO, 'PCOILS': PCOILS,'PTHE':PTHE, 'ETADE':ETADE, 'PDEE':PDEE, 'PTH': PTH, 'PET': PET, 'PLOSS': PLOSS, 'PPUMP': PPUMP,
