@@ -18,13 +18,15 @@ class Materials:
         self.FS = Material(name="Ferritic Steel", rho=7470, c_raw=10, m=3, sigma=450)
         self.Pb = Material(name="Lead", rho=9400, c_raw=2.4, m=1.5)
         self.Li4SiO4 = Material(name="Lithium Silicate", rho=2390, c_raw=1, m=2)
-        # TODO figure out actual value c_raw and m for FliBe, these are currently placeholders
+        # FLiBe (2LiF-BeF₂): Molten salt coolant/breeder for fusion blankets
+        # Cost dominated by Li-7 enrichment (99.99% Li-7 needed)
+        # Density at ~700°C operating temperature
         self.FliBe = Material(
             name="Lithium Fluoride (LiF) and Beryllium Fluoride (BeF2) Mixture",
-            rho=1900,
+            rho=1940,
             c=40,
-            c_raw=1000,
-            m=1,
+            c_raw=40,
+            m=1.2,
         )
         self.W = Material(name="Tungsten", rho=19300, c_raw=100, m=3)
         self.Li = Material(name="Lithium", rho=534, c_raw=70, m=1.5)
@@ -42,11 +44,30 @@ class Materials:
         )
         self.Nb3Sn = Material(name="Niobium-Tin (Nb3Sn)", c=5)
         self.Incoloy = Material(name="Incoloy", rho=8170, c_raw=4, m=2)
+        # GdBCO: REBCO HTS tape, same material class as YBCO
+        # Actual magnet costing uses m_cost_ybco ($/kAm) in Coils input, not Material.c
+        # Tape pricing: current $150-300/kAm, target $50/kAm, long-term $10-20/kAm
         self.GdBCO = Material(
-            name="Gadolinium Barium Copper Oxide"
-        )  # Density and cost not provided
-        self.He = Material(name="Helium")  # Density and cost not provided
-        self.NbTi = Material(name="Niobium-Titanium")  # Density and cost not provided
+            name="Gadolinium Barium Copper Oxide (GdBa2Cu3O7)",
+            rho=6350,
+            c=55,
+        )
+        # He: Gas coolant for fusion blankets/first walls
+        # Density at 8 MPa, 400°C from NIST — varies with T,P
+        self.He = Material(
+            name="Helium",
+            rho=5.64,
+            c_raw=24,
+            m=1,
+        )
+        # NbTi: LTS superconductor, ITER PF coils
+        # Wire cost ~$1/kAm at 4.2K — 50x cheaper than current REBCO tape
+        # Uses CICC cable architecture (not tape) — different conductor model
+        self.NbTi = Material(
+            name="Niobium-Titanium (NbTi)",
+            rho=6170,
+            c=4,
+        )
 
         # Beryllium: High-purity metal for first wall applications
         # Price: $800-1200/kg for high-purity ingots (2024-2025 market)

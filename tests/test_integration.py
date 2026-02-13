@@ -5,21 +5,12 @@ This module provides simplified integration tests that validate the full costing
 runs successfully for both MFE and IFE configurations, producing reasonable output structure.
 """
 
-import os
-
-# Import helper functions from the test modules
-import sys
-
 import pytest
+from helpers import load_ife_inputs, load_mfe_inputs
 
 from pyfecons import RunCosting
 from pyfecons.enums import FusionMachineType
 from pyfecons.units import M_USD
-
-sys.path.append(os.path.dirname(__file__))
-
-from test_ife import load_ife_inputs
-from test_mfe import load_mfe_inputs
 
 
 def test_mfe_tokamak_integration():

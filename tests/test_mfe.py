@@ -5,40 +5,12 @@ This module tests the full MFE costing pipeline using the actual DefineInputs.py
 from the customers directory, ensuring tests use the same parameters as production.
 """
 
-import os
-import sys
-
 import pytest
+from helpers import load_mfe_inputs
 
 from pyfecons import RunCosting
 from pyfecons.enums import FusionMachineType
 from pyfecons.units import M_USD
-
-
-def load_mfe_inputs():
-    """Load MFE inputs from the actual DefineInputs.py file used in production."""
-    # Add the customer directory to the path
-    customer_dir = os.path.join(
-        os.path.dirname(__file__), "..", "customers", "CATF", "mfe"
-    )
-    customer_dir = os.path.abspath(customer_dir)
-    sys.path.insert(0, customer_dir)
-
-    try:
-        # Force reload of the module to avoid caching issues
-        import importlib
-
-        if "DefineInputs" in sys.modules:
-            importlib.reload(sys.modules["DefineInputs"])
-        else:
-            import DefineInputs
-        return DefineInputs.Generate()
-    finally:
-        # Clean up the path and module cache
-        if customer_dir in sys.path:
-            sys.path.remove(customer_dir)
-        if "DefineInputs" in sys.modules:
-            del sys.modules["DefineInputs"]
 
 
 def test_mfe_tokamak_full_costing():

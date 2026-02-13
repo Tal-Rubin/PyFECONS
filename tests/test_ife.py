@@ -5,40 +5,12 @@ This module tests the full IFE costing pipeline using the actual DefineInputs.py
 from the customers directory, ensuring tests use the same parameters as production.
 """
 
-import os
-import sys
-
 import pytest
+from helpers import load_ife_inputs
 
 from pyfecons import RunCosting
 from pyfecons.enums import FusionMachineType
 from pyfecons.units import M_USD
-
-
-def load_ife_inputs():
-    """Load IFE inputs from the actual DefineInputs.py file used in production."""
-    # Add the customer directory to the path
-    customer_dir = os.path.join(
-        os.path.dirname(__file__), "..", "customers", "CATF", "ife"
-    )
-    customer_dir = os.path.abspath(customer_dir)
-    sys.path.insert(0, customer_dir)
-
-    try:
-        # Force reload of the module to avoid caching issues
-        import importlib
-
-        if "DefineInputs" in sys.modules:
-            importlib.reload(sys.modules["DefineInputs"])
-        else:
-            import DefineInputs
-        return DefineInputs.Generate()
-    finally:
-        # Clean up the path and module cache
-        if customer_dir in sys.path:
-            sys.path.remove(customer_dir)
-        if "DefineInputs" in sys.modules:
-            del sys.modules["DefineInputs"]
 
 
 def test_ife_direct_drive_full_costing():

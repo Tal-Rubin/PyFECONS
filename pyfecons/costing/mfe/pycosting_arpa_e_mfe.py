@@ -55,9 +55,9 @@ materials = {
     "SS316": {"rho": 7860, "c_raw": 2, "m": 2, "sigma": 900},
     "Nb3Sn": {"c": 5},
     "Incoloy": {"rho": 8170, "c_raw": 4, "m": 2},
-    "GdBCO": {},  # Density and cost not provided
-    "He": {},  # Density and cost not provided
-    "NbTi": {},  # Density and cost not provided
+    "GdBCO": {"rho": 6350, "c": 55},  # REBCO HTS, same class as YBCO
+    "He": {"rho": 5.64, "c_raw": 24, "m": 1},  # Gas coolant at 8 MPa, 400°C (NIST)
+    "NbTi": {"rho": 6170, "c": 4},  # LTS superconductor, ITER PF coils
     "Be":{"rho": 1850, "c_raw": 900, "m": 3},  # Updated 2025: was $5750, now $900/kg per market data
     "Li2TiO3":{"rho": 3430, "c_raw": 150, "m": 3},  # Updated 2025: was $1297, now $150/kg per ceramic pricing
 }

@@ -1,50 +1,15 @@
 """Tests for the input validation layer."""
 
-import os
-import sys
 import warnings
 
 import pytest
+from helpers import load_ife_inputs, load_mfe_inputs
 
 from pyfecons.enums import FuelType, FusionMachineType
 from pyfecons.exceptions import ValidationError
 from pyfecons.inputs.all_inputs import AllInputs
 from pyfecons.units import HZ, MW, Count, Meters, Percent, Ratio, Years
 from pyfecons.validation import validate_inputs
-
-# ---------------------------------------------------------------------------
-# Helpers: load real CATF inputs for regression tests
-# ---------------------------------------------------------------------------
-
-
-def _load_customer_inputs(reactor_type: str):
-    customer_dir = os.path.join(
-        os.path.dirname(__file__), "..", "customers", "CATF", reactor_type
-    )
-    customer_dir = os.path.abspath(customer_dir)
-    sys.path.insert(0, customer_dir)
-    try:
-        import importlib
-
-        if "DefineInputs" in sys.modules:
-            importlib.reload(sys.modules["DefineInputs"])
-        else:
-            import DefineInputs
-        return DefineInputs.Generate()
-    finally:
-        if customer_dir in sys.path:
-            sys.path.remove(customer_dir)
-        if "DefineInputs" in sys.modules:
-            del sys.modules["DefineInputs"]
-
-
-def load_mfe_inputs():
-    return _load_customer_inputs("mfe")
-
-
-def load_ife_inputs():
-    return _load_customer_inputs("ife")
-
 
 # ---------------------------------------------------------------------------
 # Regression: existing customer configs must pass

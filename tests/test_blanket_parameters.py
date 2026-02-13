@@ -6,12 +6,10 @@ for one parameter while keeping others at default values. This provides good cov
 without the combinatorial explosion of testing all possible combinations.
 """
 
-import importlib
-import os
-import sys
 from dataclasses import replace
 
 import pytest
+from helpers import load_ife_inputs, load_mfe_inputs
 
 from pyfecons import RunCosting
 from pyfecons.enums import (
@@ -26,48 +24,6 @@ from pyfecons.enums import (
 from pyfecons.inputs.all_inputs import AllInputs
 from pyfecons.inputs.blanket import Blanket
 from pyfecons.units import M_USD
-
-
-def load_ife_inputs() -> AllInputs:
-    """Load IFE inputs from the actual DefineInputs.py file used in production."""
-    return _load_inputs_from_customer_dir("ife")
-
-
-def load_mfe_inputs() -> AllInputs:
-    """Load MFE inputs from the actual DefineInputs.py file used in production."""
-    return _load_inputs_from_customer_dir("mfe")
-
-
-def _load_inputs_from_customer_dir(fusion_machine_type: str) -> AllInputs:
-    """
-    Load inputs from a customer DefineInputs.py file.
-
-    Args:
-        fusion_machine_type: Either "ife" or "mfe"
-
-    Returns:
-        AllInputs object from the DefineInputs.Generate() function
-    """
-    # Add the customer directory to the path
-    customer_dir = os.path.join(
-        os.path.dirname(__file__), "..", "customers", "CATF", fusion_machine_type
-    )
-    customer_dir = os.path.abspath(customer_dir)
-    sys.path.insert(0, customer_dir)
-
-    try:
-        # Force reload of the module to avoid caching issues
-        if "DefineInputs" in sys.modules:
-            importlib.reload(sys.modules["DefineInputs"])
-        else:
-            import DefineInputs
-        return DefineInputs.Generate()
-    finally:
-        # Clean up the path and module cache
-        if customer_dir in sys.path:
-            sys.path.remove(customer_dir)
-        if "DefineInputs" in sys.modules:
-            del sys.modules["DefineInputs"]
 
 
 def create_inputs_with_blanket_combination(
