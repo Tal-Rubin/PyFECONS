@@ -420,7 +420,7 @@ def compute_magnet_properties(
         return compute_copper_magnet_properties(
             coils, magnet, radial_build, power_table
         )
-    raise f"Unrecognized magnet material type {magnet.material_type}"
+    raise ValueError(f"Unrecognized magnet material type {magnet.material_type}")
 
 
 def compute_magnet_volume(

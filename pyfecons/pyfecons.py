@@ -14,9 +14,11 @@ from pyfecons.report import FinalReport, ReportContent, ReportOverrides
 from pyfecons.report.ife_report import CreateReportContent as CreateIfeReport
 from pyfecons.report.lite import CreateIfeReportLite, CreateMfeReportLite
 from pyfecons.report.mfe_report import CreateReportContent as CreateMfeReport
+from pyfecons.validation import validate_inputs
 
 
 def RunCosting(inputs: AllInputs) -> CostingData:
+    validate_inputs(inputs)
     if inputs.basic.fusion_machine_type == FusionMachineType.MFE:
         data = GenerateMfeCostingData(inputs)
     elif inputs.basic.fusion_machine_type == FusionMachineType.IFE:

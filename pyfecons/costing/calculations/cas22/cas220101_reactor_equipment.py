@@ -402,7 +402,7 @@ def compute_blanket_costs(
         blanket.blanket_type == BlanketType.SOLID_FIRST_WALL_NO_BREEDER_ANEUTRONIC_FUEL
     ):
         return M_USD(0)
-    raise f"Unknown blanket type {blanket.blanket_type}"
+    raise ValueError(f"Unknown blanket type {blanket.blanket_type}")
 
 
 def compute_material_cost(volume: Meters3, material: Material) -> M_USD:

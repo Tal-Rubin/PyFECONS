@@ -66,6 +66,7 @@ def Generate() -> AllInputs:
             f_dec=Percent(0),  # DEC capture fraction (0 = no DEC)
             eta_de=Percent(0.85),
             p_input=MW(50),
+            p_pump=MW(1),
         ),
         radial_build=RadialBuild(
             elon=Ratio(3),

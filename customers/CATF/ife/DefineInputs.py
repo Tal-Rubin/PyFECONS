@@ -67,6 +67,7 @@ def Generate() -> AllInputs:
             p_ignition=p_ignition,
             p_input=MW(p_implosion + p_ignition),  # Input power
             p_target=MW(1),  # Power into target factory
+            p_pump=MW(1),
         ),
         radial_build=RadialBuild(
             # Radial thicknesses of concentric components (innermost to outermost)

@@ -5,6 +5,31 @@
 
 ---
 
+## Input Validation Layer (2026-02-12)
+
+### Centralized Validation Module
+- **Issue**: 22 input dataclasses with ~200 fields and zero validation. Users could input negative power, efficiency > 1, or None for required fields and get either a confusing crash deep in the calculation pipeline or a confident-looking PDF with meaningless numbers.
+- **Fix**: Created `validation.py` with `validate_inputs()` called from `RunCosting()` before dispatch. Three-tier validation:
+  - **Tier 1 — Required fields**: Machine-type-dependent (MFE requires coils/eta_pin/elon/coil_t; IFE requires lasers/eta_pin1/eta_pin2/implosion_frequency). Checks both top-level dataclasses and critical fields within them.
+  - **Tier 2 — Field-level range checks**: Data-driven `FIELD_RULES` table (~50 rules) covering power values, efficiencies, fractions, radial build thicknesses, financial parameters, and shield fractions.
+  - **Tier 3 — Cross-field checks**: Shield fractions sum ≈ 1.0 (warning), time_to_replace ≤ plant_lifetime, division-by-zero prevention (eta_pin, eta_pin1/2), fuel-type burn fraction defaults (DD/DHe3).
+- **Design decisions**:
+  - Centralized module (not `__post_init__`) to avoid touching 22 stable dataclass files and to support cross-field checks
+  - Multi-error accumulation: all errors reported at once via `ValidationError` (not fail-fast)
+  - Warnings suppressed when hard errors exist (no noise)
+  - Per-magnet validation: coil_count, r_centre, dr, dz, frac_in, mfr_factor
+- **Files**: `pyfecons/validation.py` (new), `pyfecons/exceptions.py` (added FieldError, ValidationWarning, ValidationError), `pyfecons/pyfecons.py` (2-line integration), `tests/test_validation.py` (new, 44 tests)
+
+### Runtime Crash Bug Fixes
+- **Issue**: Two `raise f"string"` statements threw `TypeError` instead of the intended error message.
+- **Fix**: Changed to `raise ValueError(f"string")`.
+- **Files**: `pyfecons/costing/calculations/cas22/cas220101_reactor_equipment.py:405`, `pyfecons/costing/mfe/cas22/cas220103_coils.py:423`
+
+### Customer File Updates
+- **CATF MFE/IFE**: Added `p_pump=MW(1)` (was unset, now required by validation)
+
+---
+
 ## Power Balance Rework (2026-02-11 – 2026-02-12)
 
 ### Thermal Power Model Fix
