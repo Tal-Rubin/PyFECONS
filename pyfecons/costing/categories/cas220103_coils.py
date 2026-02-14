@@ -1,7 +1,8 @@
 from dataclasses import dataclass
+from typing import Optional
 
 from pyfecons.costing.models.magnet_properties import MagnetProperties
-from pyfecons.enums import MagnetType
+from pyfecons.enums import CoilMaterial, MagnetType
 from pyfecons.units import M_USD, Count
 
 
@@ -19,6 +20,15 @@ class CAS220103Coils:
     C22010305: M_USD = None  # Structural cost
     C22010306: M_USD = None  # Cooling cost
     C220103: M_USD = None  # Total cost
+
+    # Simplified model output fields
+    conductor_cost: M_USD = None
+    total_kAm: float = None
+    geometry_factor: float = None
+    markup: float = None
+    n_coils: int = None
+    cost_per_coil: M_USD = None
+    coil_material: Optional[CoilMaterial] = None
 
     def __post_init__(self):
         if self.magnet_properties is None:

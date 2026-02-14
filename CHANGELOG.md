@@ -5,6 +5,80 @@
 
 ---
 
+## Simplified Coil Costing Model (2026-02-13)
+
+### New Feature: Conductor Scaling Mode for CAS 220103
+- **Issue**: The existing coils model requires 10+ individually-specified `Magnet` objects (TF, CS, PF1-PF8) with per-coil geometry — ~140 input values. Too detailed for a TEA tool comparing confinement concepts. Also tokamak-centric with no differentiation by confinement type.
+- **Fix**: Added a simplified scaling mode alongside the existing detailed model. When `b_max` and `r_coil` are provided (instead of a `magnets` list), uses conductor scaling law:
+  ```
+  total_kAm = G × B_max × R_coil² / (μ₀ × 1000)
+  total_cost = total_kAm × cost_per_kAm × manufacturing_markup
+  ```
+- **Geometry factor G** accounts for coil topology:
+  - **Tokamak** (ST/CT): G = 4π² ≈ 39.5 — empirical total-system scaling for TF+CS+PF combined
+  - **Magnetic mirror**: G = n_coils × 4π — each solenoid independently produces field (N does NOT cancel)
+  - **Stellarator**: G = 4π² × path_factor — cooperative field like tokamak, but 3D coil paths ~2× longer
+- **`r_coil` encompasses plasma + vessel + blanket + shield**. Aneutronic fuels without a breeding blanket get smaller r_coil → less conductor → cheaper magnets.
+- **Coil material selection**: New `CoilMaterial` enum with default $/kAm:
+  - REBCO_HTS: $50/kAm (GdBCO/YBCO tape, CFS/SPARC)
+  - NB3SN: $7/kAm (ITER TF/CS, LTS CICC)
+  - NBTI: $7/kAm (ITER PF, workhorse LTS)
+  - COPPER: $1/kAm (resistive, requires large p_coils input)
+- **Manufacturing markup** per confinement type: Mirror 2.5×, ST 6×, CT 8×, Stellarator 12×
+- **Calibrated** against known designs:
+  - SPARC (B=20T, R=1.85m): conductor $107M × 6 = $645M (CFS est. $400-800M)
+  - ITER (B=13T, R=6.2m): conductor $110M (Nb₃Sn at $7/kAm)
+  - W7-X (B=5T, R=5.5m): conductor $67M × 15 = $1B (~€1B actual)
+  - Mirror (4 coils, B=10T, R=1m): conductor $20M × 2.5 = $50M
+- **Backward compatible**: If `magnets` list is provided, the legacy detailed model runs unchanged.
+- **Validation**: Simplified mode validates b_max > 0, r_coil > 0, and warns if copper coils + no p_coils.
+- **Files**:
+  - `pyfecons/enums.py` — Added `CoilMaterial` enum; uncommented `STELLARATOR`, `CONVENTIONAL_TOKAMAK` in `ConfinementType`
+  - `pyfecons/inputs/coils.py` — Added 7 simplified fields (b_max, r_coil, n_coils, coil_material, cost_per_kAm, coil_markup, path_factor)
+  - `pyfecons/costing/mfe/cas22/cas220103_coils.py` — Added `compute_geometry_factor()` + `cas_220103_coils_simplified()`
+  - `pyfecons/costing/categories/cas220103_coils.py` — Added 7 output fields
+  - `pyfecons/costing/mfe/mfe.py` — Dispatch: `magnets` → legacy, else → simplified
+  - `pyfecons/report/sections/cas220103_section.py` — Split into simplified/detailed branches
+  - `pyfecons/costing/mfe/templates/CAS220103_MFE_simplified.tex` — New LaTeX template
+  - `pyfecons/validation.py` — Added simplified coils + copper p_coils validation
+  - `customers/CATF/mfe/DefineInputs.py` — Switched to `Coils(b_max=18, r_coil=1.85, coil_material=CoilMaterial.REBCO_HTS)`
+  - `tests/test_simplified_coils.py` — 30 new tests (geometry factors, scaling, materials, calibration, validation)
+  - `tests/test_validation.py` — Updated magnet tests to create own magnets (CATF config no longer has magnets list)
+
+---
+
+## Unit Tests for Core Calculation Modules (2026-02-12 – 2026-02-13)
+
+### New Test Suite
+- **Issue**: Zero unit tests for calculation modules. Bugs in power balance and fuel physics went undetected.
+- **Fix**: Created 4 new test files (~100 tests) covering the highest-risk modules:
+  - `test_fuel_physics.py` — 20 tests: Q-value sanity, DT/DD/DHe3/PB11 ash splits, energy conservation, scipy-derived expected values
+  - `test_power_balance.py` — 25 tests: MFE DT baseline formulas, DEC routing, IFE via fixture, fuel type comparisons, parametrized conservation
+  - `test_financials.py` — 20 tests: CRF, effective CRF, levelized annual cost, licensing time, total project time
+  - `test_lcoe.py` — 8 tests: LCOE formula, multi-module scaling, availability proportionality
+- **Infrastructure**:
+  - `tests/helpers.py` — shared `load_mfe_inputs()`/`load_ife_inputs()` (eliminated ~120 lines of duplication)
+  - `tests/conftest.py` — session-scoped fixtures for read-only use
+  - `pythonpath` added to `pyproject.toml` so `tests/` modules are importable
+- **Refactored**: `fuel_physics.py` now derives all MeV constants from CODATA particle masses via `scipy.constants` (replacing hardcoded approximations)
+- **Files**: `tests/test_fuel_physics.py`, `tests/test_power_balance.py`, `tests/test_financials.py`, `tests/test_lcoe.py`, `tests/helpers.py`, `tests/conftest.py`, `pyfecons/costing/calculations/fuel_physics.py`
+
+---
+
+## Material Properties Completion (2026-02-13)
+
+### Completed Four Undefined Materials
+- **Issue**: Four materials in `materials.py` had placeholder or incorrect values (zero density, placeholder costs), causing incorrect cost calculations for any design using them.
+- **Fix**: Researched and completed all four:
+  - **GdBCO** (REBCO HTS tape): rho=6350 kg/m³, c=55. Same class as YBCO; used in CFS/SPARC magnets.
+  - **He** (blanket coolant): rho=5.64 kg/m³ (at 8 MPa, 400°C from NIST), c_raw=$24/kg. Chemically/neutronically inert gas coolant for DEMO blanket concepts.
+  - **NbTi** (LTS superconductor): rho=6170 kg/m³, c=4. ITER PF coils, workhorse LTS. CICC architecture differs from REBCO tape.
+  - **FLiBe** (molten salt): rho 1900→1940 kg/m³ (700°C ref), c_raw 1000→40 $/kg (aligned with c, removed unjustified 25× discrepancy), m 1→1.2.
+- **Research doc**: `fusion-tea/knowledge/research/approved/20260213-superconductor-and-coolant-materials.md`
+- **Files**: `pyfecons/materials.py`
+
+---
+
 ## Input Validation Layer (2026-02-12)
 
 ### Centralized Validation Module

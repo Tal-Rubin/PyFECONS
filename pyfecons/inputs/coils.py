@@ -1,5 +1,7 @@
 from dataclasses import dataclass
+from typing import Optional
 
+from pyfecons.enums import CoilMaterial
 from pyfecons.inputs.magnet import Magnet
 from pyfecons.units import Amperes, AmperesMillimeters2, Count, Meters, Meters2
 
@@ -63,6 +65,23 @@ class Coils:
     beam_cs_area: Meters2 = Meters2(0.25)  # cross-sectional area of each support beam
     t_op: float = 4  # operating temperature of magnets
     t_env: float = 300  # temperature of environment (to be cooled from)
+
+    # === Simplified model fields ===
+    # When b_max and r_coil are set (and magnets is empty), the simplified
+    # scaling model is used instead of the detailed per-magnet calculation.
+    b_max: float = None  # Peak magnetic field at coil (Tesla)
+    # r_coil is the major radius at the coil bore — encompasses the plasma,
+    # vacuum vessel, blanket, and shield. For aneutronic fuels (pB11, DHe3)
+    # without a breeding blanket, r_coil can be significantly smaller than
+    # for DT, because the coils can be placed closer to the plasma.
+    r_coil: Meters = None  # Major radius at coil bore (meters)
+    n_coils: int = None  # Number of physical coils (default from ConfinementType)
+    coil_material: Optional[CoilMaterial] = (
+        None  # Conductor material (default REBCO_HTS)
+    )
+    cost_per_kAm: float = None  # Conductor cost in $/kAm (default from material)
+    coil_markup: float = None  # Manufacturing markup (default from ConfinementType)
+    path_factor: float = None  # Stellarator coil path length multiplier (default 2.0)
 
     def __post_init__(self):
         if self.magnets is None:

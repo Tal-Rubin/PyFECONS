@@ -13,7 +13,7 @@ Usage:
 
 import warnings
 
-from pyfecons.enums import FuelType, FusionMachineType
+from pyfecons.enums import CoilMaterial, FuelType, FusionMachineType
 from pyfecons.exceptions import FieldError, ValidationError, ValidationWarning
 from pyfecons.inputs.all_inputs import AllInputs
 
@@ -244,6 +244,7 @@ def validate_inputs(inputs: AllInputs) -> None:
     _validate_required_fields(inputs, machine_type, result)
     _validate_field_rules(inputs, result)
     _validate_magnets(inputs, result)
+    _validate_simplified_coils(inputs, machine_type, result)
     _validate_cross_field(inputs, machine_type, result)
 
     result.raise_if_errors()
@@ -362,6 +363,48 @@ def _validate_magnets(inputs: AllInputs, result: ValidationResult):
 
 
 # ---------------------------------------------------------------------------
+# Tier 2c: Simplified coils validation
+# ---------------------------------------------------------------------------
+
+
+def _validate_simplified_coils(
+    inputs: AllInputs, machine_type: FusionMachineType, result: ValidationResult
+):
+    if machine_type != FusionMachineType.MFE or inputs.coils is None:
+        return
+
+    coils = inputs.coils
+    has_magnets = bool(coils.magnets)
+    has_simplified = coils.b_max is not None and coils.r_coil is not None
+
+    if not has_magnets and not has_simplified:
+        result.error(
+            "Coils",
+            "magnets / b_max+r_coil",
+            None,
+            "must provide either magnets list (detailed mode) or b_max + r_coil (simplified mode)",
+        )
+        return
+
+    if not has_simplified:
+        return  # detailed mode — validated by _validate_magnets
+
+    # Simplified mode field checks
+    if coils.b_max <= 0:
+        result.error("Coils", "b_max", coils.b_max, "> 0 (Tesla)")
+    if coils.r_coil <= 0:
+        result.error("Coils", "r_coil", coils.r_coil, "> 0 (meters)")
+    if coils.cost_per_kAm is not None and coils.cost_per_kAm <= 0:
+        result.error("Coils", "cost_per_kAm", coils.cost_per_kAm, "> 0 ($/kAm)")
+    if coils.path_factor is not None and coils.path_factor <= 0:
+        result.error("Coils", "path_factor", coils.path_factor, "> 0")
+    if coils.n_coils is not None and coils.n_coils < 1:
+        result.error("Coils", "n_coils", coils.n_coils, ">= 1")
+    if coils.coil_markup is not None and coils.coil_markup <= 0:
+        result.error("Coils", "coil_markup", coils.coil_markup, "> 0")
+
+
+# ---------------------------------------------------------------------------
 # Tier 3: Cross-field validation
 # ---------------------------------------------------------------------------
 
@@ -416,6 +459,21 @@ def _validate_cross_field(
                         0,
                         "> 0 (division by zero in power balance)",
                     )
+
+    # Copper coils without p_coils
+    if (
+        inputs.coils is not None
+        and inputs.coils.coil_material == CoilMaterial.COPPER
+        and inputs.power_input is not None
+    ):
+        p_coils = getattr(inputs.power_input, "p_coils", None)
+        if p_coils is None or p_coils == 0:
+            result.warn(
+                "Coils",
+                "coil_material=COPPER",
+                "p_coils=0",
+                "Copper coils require significant p_coils (100-500 MW) for resistive power dissipation",
+            )
 
     # DD fuel: warn if burn fractions not explicitly set
     if (

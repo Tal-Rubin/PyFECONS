@@ -79,7 +79,10 @@ from pyfecons.costing.calculations.cas90_annualized_financial import (
 from pyfecons.costing.calculations.lcoe import lcoe_costs
 from pyfecons.costing.calculations.npv import calculate_npv
 from pyfecons.costing.calculations.power_balance import power_balance
-from pyfecons.costing.mfe.cas22.cas220103_coils import cas_220103_coils
+from pyfecons.costing.mfe.cas22.cas220103_coils import (
+    cas_220103_coils,
+    cas_220103_coils_simplified,
+)
 from pyfecons.costing.mfe.cas22.cas220104_supplementary_heating import (
     cas_220104_supplementary_heating_costs,
 )
@@ -119,9 +122,14 @@ def GenerateCostingData(inputs: AllInputs) -> CostingData:
     data.cas220102 = cas_220102_shield_costs(
         inputs.basic, inputs.shield, inputs.blanket, data.cas220101
     )
-    data.cas220103 = cas_220103_coils(
-        inputs.coils, inputs.radial_build, data.power_table
-    )
+    if inputs.coils.magnets:
+        # Legacy detailed mode: per-magnet first-principles calculation
+        data.cas220103 = cas_220103_coils(
+            inputs.coils, inputs.radial_build, data.power_table
+        )
+    else:
+        # Simplified scaling mode: conductor scaling law + markup
+        data.cas220103 = cas_220103_coils_simplified(inputs.coils, inputs.basic)
     data.cas220104 = cas_220104_supplementary_heating_costs(
         inputs.supplementary_heating
     )

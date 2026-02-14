@@ -5,11 +5,32 @@ import warnings
 import pytest
 from helpers import load_ife_inputs, load_mfe_inputs
 
-from pyfecons.enums import FuelType, FusionMachineType
+from pyfecons.enums import FuelType, FusionMachineType, MagnetMaterialType, MagnetType
 from pyfecons.exceptions import ValidationError
 from pyfecons.inputs.all_inputs import AllInputs
+from pyfecons.inputs.magnet import Magnet
 from pyfecons.units import HZ, MW, Count, Meters, Percent, Ratio, Years
 from pyfecons.validation import validate_inputs
+
+
+def _make_test_magnet(**overrides):
+    """Create a valid test magnet with optional overrides."""
+    defaults = dict(
+        name="TF",
+        type=MagnetType.TF,
+        material_type=MagnetMaterialType.HTS_CICC,
+        coil_count=12,
+        r_centre=Meters(0.18),
+        z_centre=Meters(0),
+        dr=Meters(0.25),
+        dz=Meters(0.35),
+        frac_in=Ratio(0),
+        coil_temp=20,
+        mfr_factor=5,
+    )
+    defaults.update(overrides)
+    return Magnet(**defaults)
+
 
 # ---------------------------------------------------------------------------
 # Regression: existing customer configs must pass
@@ -216,31 +237,31 @@ class TestFieldRangeChecks:
 class TestMagnetValidation:
     def test_zero_coil_count_rejected(self):
         inputs = load_mfe_inputs()
-        inputs.coils.magnets[0].coil_count = 0
+        inputs.coils.magnets = [_make_test_magnet(coil_count=0)]
         with pytest.raises(ValidationError, match="coil_count"):
             validate_inputs(inputs)
 
     def test_negative_radius_rejected(self):
         inputs = load_mfe_inputs()
-        inputs.coils.magnets[0].r_centre = Meters(-1)
+        inputs.coils.magnets = [_make_test_magnet(r_centre=Meters(-1))]
         with pytest.raises(ValidationError, match="r_centre"):
             validate_inputs(inputs)
 
     def test_zero_dr_rejected(self):
         inputs = load_mfe_inputs()
-        inputs.coils.magnets[0].dr = Meters(0)
+        inputs.coils.magnets = [_make_test_magnet(dr=Meters(0))]
         with pytest.raises(ValidationError, match="dr"):
             validate_inputs(inputs)
 
     def test_frac_in_over_one_rejected(self):
         inputs = load_mfe_inputs()
-        inputs.coils.magnets[0].frac_in = Ratio(1.5)
+        inputs.coils.magnets = [_make_test_magnet(frac_in=Ratio(1.5))]
         with pytest.raises(ValidationError, match="frac_in"):
             validate_inputs(inputs)
 
     def test_zero_mfr_factor_rejected(self):
         inputs = load_mfe_inputs()
-        inputs.coils.magnets[0].mfr_factor = 0
+        inputs.coils.magnets = [_make_test_magnet(mfr_factor=0)]
         with pytest.raises(ValidationError, match="mfr_factor"):
             validate_inputs(inputs)
 

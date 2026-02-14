@@ -36,6 +36,38 @@ class CAS220103Section(ReportSection):
 
     def _init_mfe_coils(self, cas220103: CAS220103Coils, coils):
         """Initialize for MFE coils case."""
+        if cas220103.total_kAm is not None:
+            self._init_mfe_coils_simplified(cas220103, coils)
+        else:
+            self._init_mfe_coils_detailed(cas220103, coils)
+
+    def _init_mfe_coils_simplified(self, cas220103: CAS220103Coils, coils):
+        """Initialize for simplified conductor scaling mode."""
+        self.template_file = "CAS220103_MFE_simplified.tex"
+
+        material = cas220103.coil_material
+        cost_per_kAm = (
+            coils.cost_per_kAm
+            if coils.cost_per_kAm is not None
+            else material.default_cost_per_kAm
+        )
+
+        self.replacements = {
+            "coilMaterialName": material.display_name,
+            "bMax": f"{coils.b_max:.1f}",
+            "rCoil": f"{coils.r_coil:.2f}",
+            "nCoils": str(cas220103.n_coils),
+            "geometryFactor": f"{cas220103.geometry_factor:.1f}",
+            "totalKAm": f"{cas220103.total_kAm:,.0f}",
+            "costPerKAm": f"{cost_per_kAm}",
+            "conductorCost": f"{cas220103.conductor_cost:.1f}",
+            "coilMarkup": f"{cas220103.markup:.1f}",
+            "costPerCoil": f"{cas220103.cost_per_coil:.1f}",
+            "C220103": str(round(cas220103.C220103)),
+        }
+
+    def _init_mfe_coils_detailed(self, cas220103: CAS220103Coils, coils):
+        """Initialize for legacy detailed per-magnet mode."""
         self.template_file = "CAS220103_MFE_DT_tokamak.tex"
 
         # Create replacements dictionary with the same values that were in the original file

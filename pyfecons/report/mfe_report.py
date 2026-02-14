@@ -51,7 +51,16 @@ def CreateReportContent(
         if inputs.basic.include_safety_hazards_costs
         else "\\safetycostsfalse"
     )
-    document_replacements = {"%safety_costs_flag%": safety_flag}
+    # Select CAS220103 template based on coils model (simplified vs detailed)
+    cas220103_tex = (
+        "CAS220103_MFE_simplified.tex"
+        if costing_data.cas220103.total_kAm is not None
+        else "CAS220103_MFE_DT_tokamak.tex"
+    )
+    document_replacements = {
+        "%safety_costs_flag%": safety_flag,
+        "%CAS220103_input%": f"\\input{{Modified/{cas220103_tex}}}",
+    }
     document_template = load_document_template(
         TEMPLATES_PATH, DOCUMENT_TEMPLATE, overrides, document_replacements
     )

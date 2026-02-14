@@ -8,9 +8,9 @@ class FusionMachineType(Enum):
 
 
 class ConfinementType(Enum):
-    # STELLARATOR = (FusionMachineType.MFE, 'STELLARATOR')
+    STELLARATOR = (FusionMachineType.MFE, "STELLARATOR")
     SPHERICAL_TOKAMAK = (FusionMachineType.MFE, "SPHERICAL_TOKAMAK")
-    # CONVENTIONAL_TOKAMAK = (FusionMachineType.MFE, 'CONVENTIONAL_TOKAMAK')
+    CONVENTIONAL_TOKAMAK = (FusionMachineType.MFE, "CONVENTIONAL_TOKAMAK")
     # COMPACT_TOKAMAK = (FusionMachineType.MFE, 'COMPACT_TOKAMAK')
     MAGNETIC_MIRROR = (FusionMachineType.MFE, "MAGNETIC_MIRROR")
     # SPHEROMAK = (FusionMachineType.MFE, 'SPHEROMAK')
@@ -202,4 +202,18 @@ class Region(Enum):
         obj = object.__new__(cls)
         obj._value_ = value
         obj.display_name = display_name
+        return obj
+
+
+class CoilMaterial(Enum):
+    REBCO_HTS = ("REBCO_HTS", "REBCO HTS (GdBCO/YBCO)", 50)
+    NB3SN = ("NB3SN", "Nb3Sn (LTS)", 7)
+    NBTI = ("NBTI", "NbTi (LTS)", 7)
+    COPPER = ("COPPER", "Copper (Resistive)", 1)
+
+    def __new__(cls, value, display_name, default_cost_per_kAm):
+        obj = object.__new__(cls)
+        obj._value_ = value
+        obj.display_name = display_name
+        obj.default_cost_per_kAm = default_cost_per_kAm
         return obj

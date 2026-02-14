@@ -431,3 +431,91 @@ def compute_magnet_volume(
         return Meters3(volume * radial_build.elon)
     else:
         return Meters3(volume)
+
+
+# ---------------------------------------------------------------------------
+# Simplified coil costing model
+# ---------------------------------------------------------------------------
+import scipy.constants as sc
+
+from pyfecons.enums import CoilMaterial, ConfinementType
+from pyfecons.inputs.basic import Basic
+
+# Default parameters per confinement type.
+# markup: manufacturing complexity multiplier over raw conductor cost
+# n_coils: typical number of physical coils
+# path_factor: extra coil path length for 3D geometries (stellarator)
+CONFINEMENT_DEFAULTS = {
+    ConfinementType.MAGNETIC_MIRROR: {"markup": 2.5, "n_coils": 4, "path_factor": 1.0},
+    ConfinementType.SPHERICAL_TOKAMAK: {"markup": 6, "n_coils": 20, "path_factor": 1.0},
+    ConfinementType.CONVENTIONAL_TOKAMAK: {
+        "markup": 8,
+        "n_coils": 26,
+        "path_factor": 1.0,
+    },
+    ConfinementType.STELLARATOR: {"markup": 12, "n_coils": 50, "path_factor": 2.0},
+}
+
+
+def compute_geometry_factor(
+    confinement_type: ConfinementType, n_coils: int, path_factor: float
+) -> float:
+    """Compute the geometry factor G for conductor quantity scaling.
+
+    total_kAm = G * B * R^2 / (mu_0 * 1000)
+
+    Tokamak: G = 4pi^2 — empirical total-system (TF+CS+PF) scaling.
+        TF coil perimeter is ~2*pi*a (minor radius), but CS and PF coils
+        at major radius make R^2 the correct total-system scaling.
+    Mirror:  G = n_coils * 4*pi — each solenoid coil independently produces B.
+    Stellarator: G = 4*pi^2 * path_factor — cooperative field like tokamak,
+        but 3D coil paths are ~2x longer than planar coils.
+    """
+    if confinement_type == ConfinementType.MAGNETIC_MIRROR:
+        return n_coils * 4 * math.pi
+    elif confinement_type == ConfinementType.STELLARATOR:
+        return 4 * math.pi**2 * path_factor
+    else:  # tokamaks (spherical, conventional)
+        return 4 * math.pi**2
+
+
+def cas_220103_coils_simplified(coils: Coils, basic: Basic) -> CAS220103Coils:
+    """Simplified coil costing via conductor scaling law.
+
+    Cost = conductor_material_cost * manufacturing_markup
+    where conductor_material_cost = total_kAm * cost_per_kAm
+    and total_kAm = G * B * R^2 / (mu_0 * 1000).
+
+    G (geometry factor) accounts for coil topology:
+    - Tokamak: 4*pi^2 (empirical total-system scaling)
+    - Mirror: n_coils * 4*pi (independent solenoid coils)
+    - Stellarator: 4*pi^2 * path_factor (3D coil paths)
+    """
+    defaults = CONFINEMENT_DEFAULTS[basic.confinement_type]
+    markup = coils.coil_markup if coils.coil_markup is not None else defaults["markup"]
+    n_coils = coils.n_coils if coils.n_coils is not None else defaults["n_coils"]
+    path_factor = (
+        coils.path_factor if coils.path_factor is not None else defaults["path_factor"]
+    )
+    material = coils.coil_material or CoilMaterial.REBCO_HTS
+    cost_per_kAm = (
+        coils.cost_per_kAm
+        if coils.cost_per_kAm is not None
+        else material.default_cost_per_kAm
+    )
+
+    G = compute_geometry_factor(basic.confinement_type, n_coils, path_factor)
+    total_kAm = G * coils.b_max * coils.r_coil**2 / (sc.mu_0 * 1000)
+    conductor_cost_musd = total_kAm * cost_per_kAm / 1e6
+    total_cost = conductor_cost_musd * markup
+
+    result = CAS220103Coils()
+    result.C220103 = M_USD(total_cost)
+    result.conductor_cost = M_USD(conductor_cost_musd)
+    result.total_kAm = total_kAm
+    result.geometry_factor = G
+    result.markup = markup
+    result.n_coils = n_coils
+    result.cost_per_coil = M_USD(total_cost / n_coils)
+    result.coil_material = material
+    return result
