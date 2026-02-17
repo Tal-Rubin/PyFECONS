@@ -14,6 +14,7 @@ from pyfecons.report import FinalReport, ReportContent, ReportOverrides
 from pyfecons.report.ife_report import CreateReportContent as CreateIfeReport
 from pyfecons.report.lite import CreateIfeReportLite, CreateMfeReportLite
 from pyfecons.report.mfe_report import CreateReportContent as CreateMfeReport
+from pyfecons.sensitivity import SensitivityResult
 from pyfecons.validation import validate_inputs
 
 
@@ -39,18 +40,20 @@ def CreateReportContent(
     inputs: AllInputs,
     costing_data: CostingData,
     overrides: Optional[ReportOverrides] = None,
+    sensitivity_result: Optional[SensitivityResult] = None,
 ) -> ReportContent:
     """
     Create report content with given cost calculation output data.
     :param inputs: The input parameters used for cost calculations.
     :param costing_data: The output data and templates providers for cost calculations.
     :param overrides: Overriding substitutions for latex template hydration.
+    :param sensitivity_result: Optional sensitivity analysis results for inclusion in report.
     :return: Report contents including files, hydrated templates, and latex packages.
     """
     if costing_data.fusion_machine_type == FusionMachineType.MFE:
-        return CreateMfeReport(inputs, costing_data, overrides)
+        return CreateMfeReport(inputs, costing_data, overrides, sensitivity_result)
     elif costing_data.fusion_machine_type == FusionMachineType.IFE:
-        return CreateIfeReport(inputs, costing_data, overrides)
+        return CreateIfeReport(inputs, costing_data, overrides, sensitivity_result)
     elif costing_data.fusion_machine_type == FusionMachineType.MIF:
         raise NotImplementedError()
     raise ValueError("Invalid reactor type")

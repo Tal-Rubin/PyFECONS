@@ -15,6 +15,8 @@
 \usepackage{comment}
 \newif\ifsafetycosts
 %safety_costs_flag%
+\newif\ifsensitivity
+%sensitivity_flag%
 \hypersetup{%
   colorlinks = true,
   linkcolor  = black
@@ -66,10 +68,13 @@
 \input{Modified/CAS600000.tex}
 \input{Modified/CASstructure.tex}
 \input{Modified/LCOE.tex}
+\ifsensitivity
+\input{Modified/SensitivityAnalysis.tex}
+\fi
 
 
 
- \newpage 
+ \newpage
   \appendix
 \ifsafetycosts
   \newpage

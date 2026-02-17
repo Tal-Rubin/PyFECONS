@@ -32,12 +32,18 @@ parser.add_argument(
     action="store_true",
     help="Enable safety and hazard mitigation costs",
 )
+parser.add_argument(
+    "--no-sensitivity",
+    action="store_true",
+    help="Skip sensitivity analysis in the report",
+)
 
 args = parser.parse_args()
 fusion_machine_type = args.fusion_machine_type
 customer_name = args.customer_name
 generate_lite = args.lite
 enable_safety = args.safety
+skip_sensitivity = args.no_sensitivity
 
 if fusion_machine_type not in ["mfe", "ife", "mif"]:
     print("Invalid FUSION_MACHINE_TYPE: should be mfe, ife, or mif")
@@ -128,6 +134,27 @@ with open(f"{customer_folder}/{data_filename}", "w", encoding="utf-8") as file:
     file.write(dataJSONstring)
 
 
+################################
+# RUN SENSITIVITY ANALYSIS     #
+################################
+
+sensitivity_result = None
+if not skip_sensitivity and not generate_lite:
+    from pyfecons.sensitivity import sensitivity_analysis
+
+    print("Running sensitivity analysis (this may take a few minutes)...")
+    sensitivity_result = sensitivity_analysis(inputs, quiet=True)
+    if sensitivity_result is not None:
+        print(
+            f"Sensitivity analysis complete: "
+            f"analyzed {sensitivity_result.n_parameters_analyzed} parameters, "
+            f"top elasticity = {abs(sensitivity_result.entries[0].elasticity):.4f} "
+            f"({sensitivity_result.entries[0].display_name})."
+        )
+    else:
+        print("WARNING: Sensitivity analysis failed (could not compute baseline LCOE).")
+
+
 #########################
 # HYDRATE THE TEMPLATES #
 #########################
@@ -152,7 +179,9 @@ def get_report_filename(
 if generate_lite:
     report_content = CreateReportContentLite(inputs, costing_data, overrides)
 else:
-    report_content = CreateReportContent(inputs, costing_data, overrides)
+    report_content = CreateReportContent(
+        inputs, costing_data, overrides, sensitivity_result
+    )
 report_filename = get_report_filename(fusion_machine_type, generate_lite, enable_safety)
 
 # Save report sections to JSON for tracking changes
@@ -231,7 +260,7 @@ print(f"Costing run completed for {customer_name}. Data saved to {customer_folde
 
 
 # create final pdf output
-final_report = RenderFinalReport(report_content)
+final_report = RenderFinalReport(report_content, hide_output=True)
 with open(f"{output_dir}/{report_filename}.tex", "w", encoding="utf-8") as file:
     file.write(final_report.report_tex)
 with open(f"{output_dir}/{report_filename}.pdf", "wb") as file:

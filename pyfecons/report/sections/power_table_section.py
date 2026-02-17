@@ -3,6 +3,7 @@ from typing import Any, Dict
 
 from pyfecons.costing.accounting.power_table import PowerTable
 from pyfecons.enums import FuelType, FusionMachineType
+from pyfecons.figures.sankey_diagram import PowerFlowSankey
 from pyfecons.inputs.basic import Basic
 from pyfecons.inputs.power_input import PowerInput
 from pyfecons.report.section import ReportSection
@@ -71,9 +72,14 @@ class PowerTableSection(ReportSection):
                 "PASH": power_table.p_ash,  # Charged particle (ash) power
                 "PNEUTRON": power_table.p_neutron,  # Neutron Power
                 "MN___": power_input.mn,  # Neutron Energy Multiplier
+                "FDEC__": power_input.f_dec if power_input.f_dec is not None else 0.0,
+                "ETADE_": power_input.eta_de if power_input.eta_de is not None else 0.0,
+                "PDEE__": power_table.p_dee,  # DEC Electric Power
+                "PWALL_": power_table.p_wall,  # Ash Thermal Power
                 "ETAP__": power_input.eta_p,  # Pumping power capture efficiency
                 "PTH___": power_table.p_th,  # Thermal Power
                 "ETATH": power_input.eta_th,  # Thermal conversion efficiency
+                "PTHEL_": power_table.p_the,  # Thermal Electric Power
                 "PET___": power_table.p_et,  # Total (Gross) Electric Power
                 # 2. Recirculating power
                 "PLOSS": power_table.p_loss,  # Lost Power
@@ -133,3 +139,7 @@ class PowerTableSection(ReportSection):
             }
         else:
             raise ValueError(f"Unknown reactor type: {basic.fusion_machine_type}")
+
+        self.figures["Figures/power_flow_sankey.png"] = PowerFlowSankey.create(
+            power_table, basic, power_input
+        )

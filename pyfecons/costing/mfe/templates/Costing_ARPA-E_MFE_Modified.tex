@@ -17,6 +17,10 @@
 \newif\ifsafetycosts
 %safety_costs_flag%
 
+% Sensitivity analysis flag - will be replaced by Python based on sensitivity results
+\newif\ifsensitivity
+%sensitivity_flag%
+
 \hypersetup{%
     colorlinks = true,
     linkcolor  = black
@@ -75,6 +79,9 @@
     \input{Modified/CASstructure.tex}
     \input{Modified/LCOE.tex}
     %\input{Modified/NPV.tex}  # TODO: Fix NPV calc and implement
+\ifsensitivity
+    \input{Modified/SensitivityAnalysis.tex}
+\fi
 
 
 

@@ -20,3 +20,14 @@ customers/**
 
 temp/uv.lock
 uv.lock
+
+# Coverage artifacts
+.coverage
+htmlcov/
+
+# AI assistant config
+.github/copilot-instructions.md
+
+# Local files
+2601.21724v2.pdf
+TODO_IMPROVEMENTS.md

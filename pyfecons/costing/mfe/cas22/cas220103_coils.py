@@ -55,7 +55,9 @@ def cas_220103_coils(
     cas220103.C22010303 = M_USD(
         sum([mag.magnet_total_cost for mag in cas220103.pf_coils])
     )
-    # Shim coil costs, taken as 5% total primary magnet costs
+    # Shim (correction/trim) coil costs: 5% of primary magnet costs.
+    # Per ARIES methodology (Waganer 2006); consistent with ITER correction
+    # coils at ~3-5% of main coil set cost.
     cas220103.C22010304 = 0.05 * (
         cas220103.C22010301 + cas220103.C22010302 + cas220103.C22010303
     )

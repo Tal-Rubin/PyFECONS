@@ -71,6 +71,7 @@ def get_replacements(costing_data: CostingData) -> dict[str, str]:
     aries_st_empty_values = {
         "M220109": "-",
         "M220111": "-",
+        "M220112": "-",
         "M220120": "-",
         "M220606": "-",
     }

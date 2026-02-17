@@ -9,6 +9,7 @@ from pyfecons.report import (
     combine_figures,
     get_report_sections,
 )
+from pyfecons.sensitivity import SensitivityResult
 from pyfecons.templates import hydrate_templates, load_document_template
 
 TEMPLATES_PATH = "pyfecons.costing.mfe.templates"
@@ -44,12 +45,17 @@ def CreateReportContent(
     inputs: AllInputs,
     costing_data: CostingData,
     overrides: Optional[ReportOverrides] = None,
+    sensitivity_result: Optional[SensitivityResult] = None,
 ) -> ReportContent:
     # Set safety costs flag for LaTeX conditional
     safety_flag = (
         "\\safetycoststrue"
         if inputs.basic.include_safety_hazards_costs
         else "\\safetycostsfalse"
+    )
+    # Set sensitivity flag for LaTeX conditional
+    sensitivity_flag = (
+        "\\sensitivitytrue" if sensitivity_result is not None else "\\sensitivityfalse"
     )
     # Select CAS220103 template based on coils model (simplified vs detailed)
     cas220103_tex = (
@@ -59,12 +65,13 @@ def CreateReportContent(
     )
     document_replacements = {
         "%safety_costs_flag%": safety_flag,
+        "%sensitivity_flag%": sensitivity_flag,
         "%CAS220103_input%": f"\\input{{Modified/{cas220103_tex}}}",
     }
     document_template = load_document_template(
         TEMPLATES_PATH, DOCUMENT_TEMPLATE, overrides, document_replacements
     )
-    report_sections = get_report_sections(inputs, costing_data)
+    report_sections = get_report_sections(inputs, costing_data, sensitivity_result)
     hydrated_templates = hydrate_templates(TEMPLATES_PATH, report_sections, overrides)
     figures = combine_figures(report_sections)
     included_files = get_local_included_files_map(

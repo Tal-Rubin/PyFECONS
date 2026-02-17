@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from pyfecons.costing_data import CostingData
 from pyfecons.enums import FusionMachineType
@@ -46,10 +46,14 @@ from pyfecons.report.sections.cost_table_section import CostTableSection
 from pyfecons.report.sections.lcoe_section import LcoeSection
 from pyfecons.report.sections.npv_section import NpvSection
 from pyfecons.report.sections.power_table_section import PowerTableSection
+from pyfecons.report.sections.sensitivity_section import SensitivitySection
+from pyfecons.sensitivity import SensitivityResult
 
 
 def get_report_sections(
-    inputs: AllInputs, costing_data: CostingData
+    inputs: AllInputs,
+    costing_data: CostingData,
+    sensitivity_result: Optional[SensitivityResult] = None,
 ) -> List[ReportSection]:
     """Get all report sections with their templates and replacements."""
     fusion_machine_type = inputs.basic.fusion_machine_type
@@ -119,6 +123,10 @@ def get_report_sections(
         CostTableSection(costing_data, fusion_machine_type),
         NpvSection(costing_data.npv, inputs.npv_input),
     ]
+
+    # Sensitivity analysis section (if results are available)
+    if sensitivity_result is not None:
+        sections.append(SensitivitySection(sensitivity_result))
 
     # Safety and hazard mitigation sections (conditional, MFE only for now)
     if (

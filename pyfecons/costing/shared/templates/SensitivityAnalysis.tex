@@ -1,0 +1,26 @@
+\newpage
+
+\section{Sensitivity Analysis}
+
+A sensitivity analysis was performed on the LCOE calculation by perturbing each of the sensitivity_n_params scalar input parameters by 1\% and measuring the resulting change in LCOE (baseline: \$sensitivity_lcoe_baseline/MWh). The elasticity $\varepsilon_i$ of each parameter $x_i$ is defined as:
+
+\begin{equation}
+\varepsilon_i = \frac{\partial(\text{LCOE})}{\partial x_i} \cdot \frac{x_i}{\text{LCOE}}
+\end{equation}
+
+An elasticity of $|\varepsilon| = 1$ means a 1\% change in the parameter produces a 1\% change in LCOE. Table~\ref{tab:sensitivity} shows the sensitivity_top_n most influential parameters, ranked by $|\varepsilon|$.
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{r l r r c}
+\hline
+\textbf{Rank} & \textbf{Parameter} & \textbf{Baseline} & \textbf{$|\varepsilon|$} & \textbf{Dir.} \\
+\hline
+sensitivity_table_rows \\
+\hline
+\end{tabular}
+\caption{Top sensitivity_top_n parameters by absolute LCOE elasticity.}
+\label{tab:sensitivity}
+\end{table}
+
+A positive direction (+) indicates that increasing the parameter increases LCOE; a negative direction ($-$) indicates the reverse.

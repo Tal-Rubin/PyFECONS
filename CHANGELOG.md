@@ -5,6 +5,66 @@
 
 ---
 
+## Sensitivity Analysis in Report (2026-02-17)
+
+### New Feature: LCOE Sensitivity Table in PDF Report
+- **Issue**: Sensitivity analysis existed only as a standalone CLI script (`sensitivity_analysis.py`) with Excel export. Users had no way to see which input parameters most affect LCOE directly in the generated report.
+- **Fix**: Integrated sensitivity analysis into the standard report pipeline. When `RunCostingForCustomer.py` runs, it automatically perturbs every scalar input by 1%, re-runs costing, and computes elasticity (ε = % change in LCOE per % change in parameter). The top 15 most sensitive parameters appear in a LaTeX table in the PDF report, with colored direction indicators (red +, green −).
+- **CLI flags**: `--no-sensitivity` skips analysis; `--lite` reports also skip it automatically.
+- **Performance**: ~100-150 RunCosting calls with suppressed stdout/stderr via `contextlib.redirect_stdout`. Typically 10-75 seconds depending on parameter count.
+
+### New Files
+- `pyfecons/sensitivity.py` — Core library module: `SensitivityEntry`/`SensitivityResult` dataclasses, `PARAMETER_DISPLAY_NAMES` dict (~100 human-readable LaTeX names), `get_scalar_leaves()` with bool exclusion fix, `sensitivity_analysis()` function
+- `pyfecons/report/sections/sensitivity_section.py` — `SensitivitySection(ReportSection)` generating dynamic table rows with `_escape_latex()` helper
+- `pyfecons/costing/shared/templates/SensitivityAnalysis.tex` — Shared LaTeX template with elasticity equation, 5-column table (Rank, Parameter, Baseline, |ε|, Dir.), used by both MFE and IFE
+
+### Modified Files
+- `pyfecons/report/utils.py` — `get_report_sections()` accepts optional `SensitivityResult`, appends `SensitivitySection` after NPV
+- `pyfecons/pyfecons.py` — `CreateReportContent()` threads `sensitivity_result` to MFE/IFE report builders
+- `pyfecons/__init__.py` — Exports `SensitivityResult` and `sensitivity_analysis`
+- `pyfecons/report/mfe_report.py` — Accepts `sensitivity_result`, sets `%sensitivity_flag%` in document template
+- `pyfecons/report/ife_report.py` — Same changes as MFE
+- `pyfecons/costing/mfe/templates/Costing_ARPA-E_MFE_Modified.tex` — Added `\ifsensitivity` conditional block
+- `pyfecons/costing/ife/templates/Costing_ARPA-E_IFE_Modified.tex` — Same changes as MFE
+- `RunCostingForCustomer.py` — Added `--no-sensitivity` flag, runs analysis after costing, passes result to report, suppressed pdflatex output
+- `sensitivity_analysis.py` — Refactored to import from `pyfecons.sensitivity` instead of duplicating logic
+
+---
+
+## Test Coverage Expansion & Template Fixes (2026-02-17)
+
+### New Unit Tests for Previously Untested Modules
+- **Issue**: Four core calculation modules had no unit tests: reactor equipment cost components, shield costs, NPV, and legacy detailed coil costing.
+- **Fix**: Created 4 new test files (~73 tests):
+  - `test_cas220101_enhanced.py` — 30 tests: first wall material selection by fuel type (DT W/Be/Li/FLiBe, DD→W, DHe3/PB11→FS), blanket costs for all BlanketType variants, neutron multiplier (7.5% of blanket, DT-only), radial build geometry (cumulative radii, MFE vs IFE), volume positivity, integration (sum-of-components, aneutronic zero blanket/multiplier)
+  - `test_npv.py` — 8 tests: zero discount rate identity, positive discount attenuation, single-year undiscounted, zero lifetime, sensitivity monotonicity for p_net/availability/discount rate/lifetime
+  - `test_cas220102_shield.py` — 13 tests: MFE total equals sum, misc 10% of bioshield, volume storage, IFE default 5x and custom scaling, material fraction comparisons
+  - `test_cas220103_coils.py` — 22 tests: simplified model (positive cost, B-field scaling, R² scaling, conductor×markup identity, custom overrides, REBCO default), geometry factor formulas (tokamak/mirror/stellarator), confinement defaults (all 4 types), legacy detailed (shim 5%, total summation, magnet type sorting, coil count, PF pair counting)
+- **Files**: `tests/test_cas220101_enhanced.py`, `tests/test_npv.py`, `tests/test_cas220102_shield.py`, `tests/test_cas220103_coils.py`
+
+### pytest-cov Integration
+- Added `pytest-cov==6.0.0` to `requirements.txt`
+- Configured in `pyproject.toml`: `--cov=pyfecons --cov-report=term-missing --cov-fail-under=40`
+- Every `pytest` run now shows line-level coverage and fails if overall coverage drops below 40%
+
+### Magic Multipliers Documented/Configurable
+- **IFE 5x shield scaling** (`cas220102_shield.py`): Made configurable as `Shield.ife_shield_scaling` (default 5.0). No published source identified; documented as inherited from original codebase.
+- **7.5% neutron multiplier** (`cas220101_reactor_equipment.py`): Already well-documented with source reference. No change needed.
+- **5% shim coil** (`cas220103_coils.py`): Documented inline per ARIES methodology (Waganer 2006), consistent with ITER correction coils at ~3-5%.
+- **Files**: `pyfecons/inputs/shield.py`, `pyfecons/costing/calculations/cas22/cas220102_shield.py`, `pyfecons/costing/mfe/cas22/cas220103_coils.py`
+
+### LaTeX Template Fixes
+- **DEC rows in MFE power table**: Added f_dec, eta_de, P_dee, P_wall, P_the rows; updated P_TH and P_ET equations; fixed section numbering (2.5.3→2.6, 2.6.→2.7, 2.6.1→2.7.1)
+- **IFE power table numbering**: Fixed gap 2.5.3→2.5
+- **CAS 22.1.19 in CASstructure.tex**: Added Scheduled Replacement row with M220119 ARIES placeholder
+- **LCOE C_SCR**: Fixed stale reference in shared, MFE lite, and IFE lite LCOE templates — clarifies that scheduled component replacement is now capitalized under CAS 22.01.19 within C_AC
+- **Foreword citation**: Added `\cite{Woodruff2026CostingFrameworkFusion}` to both MFE and IFE forewords
+- **C220112 bug fix**: Added missing C220112 (Isotope Separation) mapping in `cost_table_builder.py` with None guard; added `M220112: "-"` to MFE and IFE comparison tables
+- **DEC placeholders**: Added FDEC__, ETADE_, PDEE__, PWALL_, PTHEL_ to `power_table_section.py`
+- **Files**: `powerTableMFEDT.tex`, `powerTableIFEDT.tex`, `power_table_section.py`, `CASstructure.tex`, `LCOE.tex` (×3), `foreword.tex` (×2), `cost_table_builder.py`, `cost_table_mfe.py`, `cost_table_ife.py`
+
+---
+
 ## Simplified Coil Costing Model (2026-02-13)
 
 ### New Feature: Conductor Scaling Mode for CAS 220103

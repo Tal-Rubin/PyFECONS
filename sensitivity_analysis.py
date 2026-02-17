@@ -1,10 +1,9 @@
 """
-Sensitivity analysis: hybrid approach using PyFECONS + finite differences.
+Standalone sensitivity analysis CLI with Excel export.
 
-This approach:
-1. Uses PyFECONS for full non-differentiable calculations
-2. Computes sensitivities via finite differences (simple, reliable)
-3. Accurate and requires no code changes to PyFECONS
+This is a thin wrapper around pyfecons.sensitivity for interactive use.
+The core logic lives in pyfecons/sensitivity.py and is also used by
+RunCostingForCustomer.py for report integration.
 
 Usage:
     python sensitivity_analysis.py mfe CATF
@@ -14,7 +13,6 @@ Usage:
 import argparse
 import os
 import sys
-from copy import deepcopy
 from dataclasses import fields, is_dataclass
 from typing import Dict, List, Tuple
 
@@ -23,37 +21,13 @@ import pandas as pd
 from pyfecons import RunCosting
 from pyfecons.costing_data import CostingData
 from pyfecons.inputs.all_inputs import AllInputs
+from pyfecons.sensitivity import (
+    SensitivityResult,
+    get_scalar_leaves,
+    sensitivity_analysis,
+)
 
-
-def get_scalar_leaves(obj, prefix: str = "") -> Dict[str, Tuple]:
-    """
-    Recursively extract all scalar (numeric/bool) leaf values from a nested dataclass.
-    Returns a dict mapping 'parent.child.scalar' -> (parent_obj, field_name, value).
-    """
-    leaves = {}
-    if obj is None:
-        return leaves
-
-    from dataclasses import is_dataclass
-
-    if is_dataclass(obj):
-        for field in fields(obj):
-            field_val = getattr(obj, field.name)
-            full_path = f"{prefix}.{field.name}" if prefix else field.name
-
-            if field_val is None:
-                continue
-            elif isinstance(field_val, (int, float, bool)):
-                leaves[full_path] = (obj, field.name, field_val)
-            elif is_dataclass(field_val):
-                # Recurse into nested dataclass
-                nested = get_scalar_leaves(field_val, full_path)
-                leaves.update(nested)
-
-    return leaves
-
-
-# Mapping of CAS category codes to human-readable names
+# Mapping of CAS category codes to human-readable names (for Excel export)
 CAS_CATEGORY_NAMES = {
     # CAS 10 - Pre-construction
     "C100000": "CAS 10: Pre-construction Total",
@@ -163,100 +137,6 @@ def get_capital_cost_categories(costing: CostingData) -> List[Tuple[str, str, fl
     return costs
 
 
-def sensitivity_analysis(baseline_inputs: AllInputs, delta_frac: float = 0.01) -> Dict:
-    """
-    Compute ∂(LCOE)/∂(input_i) for all scalar inputs using finite differences.
-
-    Approach:
-    - Run full PyFECONS costing for baseline and perturbed inputs
-    - Use finite differences: (LCOE_perturbed - LCOE_baseline) / delta
-    - Compute for all scalar input parameters
-
-    Args:
-        baseline_inputs: The baseline AllInputs instance.
-        delta_frac: Fractional perturbation (0.01 = 1%).
-
-    Returns:
-        Dictionary with:
-        - 'lcoe_baseline': baseline LCOE
-        - 'derivatives': dict mapping input_path -> (derivative, baseline_value, elasticity)
-        - 'sorted_by_elasticity': list sorted by |elasticity|
-    """
-    print("Computing baseline LCOE using PyFECONS...")
-    baseline_costing = RunCosting(baseline_inputs)
-    lcoe_baseline = float(baseline_costing.lcoe.C1000000)
-
-    if lcoe_baseline is None or lcoe_baseline == 0:
-        print("ERROR: Could not compute baseline LCOE.")
-        return {}
-
-    print(f"Baseline LCOE: {lcoe_baseline:.4f} M$/MWh")
-    print()
-
-    # Extract all scalar inputs
-    scalar_leaves = get_scalar_leaves(baseline_inputs)
-    print(f"Found {len(scalar_leaves)} scalar input parameters.")
-    print()
-
-    derivatives = {}
-    for path, (parent_obj, field_name, baseline_val) in sorted(scalar_leaves.items()):
-        if baseline_val is None or baseline_val == 0:
-            delta = 1.0  # Use absolute delta if baseline is 0
-        else:
-            delta = abs(baseline_val) * delta_frac
-
-        # Perturbed inputs (forward difference)
-        perturbed_inputs = deepcopy(baseline_inputs)
-        perturbed_leaf = get_scalar_leaves(perturbed_inputs)
-        if path in perturbed_leaf:
-            obj, field, _ = perturbed_leaf[path]
-            setattr(obj, field, baseline_val + delta)
-
-            try:
-                perturbed_costing = RunCosting(perturbed_inputs)
-                lcoe_perturbed = float(perturbed_costing.lcoe.C1000000)
-
-                if lcoe_perturbed is not None:
-                    # Partial derivative: ∂(LCOE)/∂(input_i)
-                    derivative = (lcoe_perturbed - lcoe_baseline) / delta
-                    elasticity = derivative * baseline_val / lcoe_baseline
-                    derivatives[path] = (derivative, baseline_val, elasticity)
-                    print(
-                        f"{path:50s} = {baseline_val:15.4f}  →  ∂(LCOE)/∂ = {derivative:12.6f}"
-                    )
-                else:
-                    print(
-                        f"{path:50s} = {baseline_val:15.4f}  →  ERROR computing perturbed LCOE"
-                    )
-            except Exception as e:
-                print(f"{path:50s} = {baseline_val:15.4f}  →  ERROR: {e}")
-
-    print()
-    print("=" * 110)
-    print("SENSITIVITY RANKING (by absolute elasticity)")
-    print("=" * 110)
-    print(
-        f"{'Rank':<5} {'Input Parameter':<50} {'Baseline':<15} {'∂(LCOE)/∂':<15} {'|Elasticity|':<15}"
-    )
-    print("-" * 110)
-
-    sorted_derivs = sorted(
-        derivatives.items(), key=lambda x: abs(x[1][2]), reverse=True
-    )
-
-    for rank, (path, (deriv, baseline_val, elasticity)) in enumerate(sorted_derivs, 1):
-        print(
-            f"{rank:<5} {path:<50} {baseline_val:<15.6f} {deriv:<15.6f} {abs(elasticity):<15.6f}"
-        )
-
-    return {
-        "lcoe_baseline": lcoe_baseline,
-        "derivatives": derivatives,
-        "sorted_by_elasticity": sorted_derivs,
-        "baseline_costing": baseline_costing,
-    }
-
-
 def autofit_columns(worksheet):
     """Auto-fit column widths based on content."""
     for column_cells in worksheet.columns:
@@ -272,41 +152,37 @@ def autofit_columns(worksheet):
 
 
 def save_results_to_excel(
-    results: Dict, output_file: str = "lcoe_sensitivity_analysis.xlsx"
+    result: SensitivityResult,
+    baseline_costing: CostingData,
+    output_file: str = "lcoe_sensitivity_analysis.xlsx",
 ):
     """
     Save sensitivity analysis results to an Excel file with multiple sheets.
-
-    Args:
-        results: Dictionary returned by sensitivity_analysis()
-        output_file: Output Excel filename
     """
-    if not results:
-        print("ERROR: No results to save.")
-        return
-
     with pd.ExcelWriter(output_file, engine="openpyxl") as writer:
         # Sheet 1: Summary
         summary_data = {
-            "Metric": ["Baseline LCOE (M$/MWh)", "Total Parameters Analyzed"],
-            "Value": [f"{results['lcoe_baseline']:.6f}", len(results["derivatives"])],
+            "Metric": ["Baseline LCOE ($/MWh)", "Total Parameters Analyzed"],
+            "Value": [
+                f"{result.lcoe_baseline:.6f}",
+                result.n_parameters_analyzed,
+            ],
         }
         summary_df = pd.DataFrame(summary_data)
         summary_df.to_excel(writer, sheet_name="Summary", index=False)
 
         # Sheet 2: All derivatives ranked by absolute elasticity
         all_data = []
-        for rank, (path, (deriv, baseline_val, elasticity)) in enumerate(
-            results["sorted_by_elasticity"], 1
-        ):
+        for rank, entry in enumerate(result.entries, 1):
             all_data.append(
                 {
                     "Rank": rank,
-                    "Input Parameter": path,
-                    "Baseline Value": baseline_val,
-                    "∂(LCOE)/∂": deriv,
-                    "Elasticity": elasticity,
-                    "|Elasticity| (Ranking)": abs(elasticity),
+                    "Input Parameter": entry.parameter_path,
+                    "Display Name": entry.display_name,
+                    "Baseline Value": entry.baseline_value,
+                    "∂(LCOE)/∂": entry.derivative,
+                    "Elasticity": entry.elasticity,
+                    "|Elasticity|": abs(entry.elasticity),
                 }
             )
 
@@ -314,13 +190,12 @@ def save_results_to_excel(
         all_df.to_excel(writer, sheet_name="All Derivatives", index=False)
 
         # Sheet 3: Top 20 most sensitive
-        top20_data = all_data[:20]
-        top20_df = pd.DataFrame(top20_data)
+        top20_df = pd.DataFrame(all_data[:20])
         top20_df.to_excel(writer, sheet_name="Top 20 Sensitive", index=False)
 
         # Sheet 4: Top 20 Capital Expenses
-        if "baseline_costing" in results and results["baseline_costing"] is not None:
-            capital_costs = get_capital_cost_categories(results["baseline_costing"])
+        if baseline_costing is not None:
+            capital_costs = get_capital_cost_categories(baseline_costing)
             top20_capital = capital_costs[:20]
 
             capital_data = []
@@ -427,25 +302,27 @@ if __name__ == "__main__":
     print("=" * 90)
     print()
 
-    results = sensitivity_analysis(baseline_inputs, delta_frac=args.delta)
+    # Run sensitivity analysis (verbose mode for standalone CLI)
+    result = sensitivity_analysis(baseline_inputs, delta_frac=args.delta, quiet=False)
 
-    if results:
+    if result:
         print()
         print("=" * 90)
         print("TOP 5 MOST SENSITIVE PARAMETERS (ranked by |Elasticity|)")
         print("=" * 90)
 
-        top_5 = results["sorted_by_elasticity"][:5]
-        if top_5:
-            for i, (path, (deriv, baseline_val, elasticity)) in enumerate(top_5, 1):
-                print(
-                    f"\n{i}. {path}\n"
-                    f"   Baseline value:        {baseline_val:.6f}\n"
-                    f"   ∂(LCOE)/∂:            {deriv:+.6f}\n"
-                    f"   Elasticity:           {elasticity:+.4f}\n"
-                    f"   |Elasticity|:         {abs(elasticity):.4f}"
-                )
+        for i, entry in enumerate(result.entries[:5], 1):
+            print(
+                f"\n{i}. {entry.parameter_path} ({entry.display_name})\n"
+                f"   Baseline value:        {entry.baseline_value:.6f}\n"
+                f"   ∂(LCOE)/∂:            {entry.derivative:+.6f}\n"
+                f"   Elasticity:           {entry.elasticity:+.4f}\n"
+                f"   |Elasticity|:         {abs(entry.elasticity):.4f}"
+            )
+
+        # Run baseline costing for capital cost export
+        baseline_costing = RunCosting(baseline_inputs)
 
         # Save to Excel
         output_file = os.path.join(output_dir, "lcoe_sensitivity_analysis.xlsx")
-        save_results_to_excel(results, output_file)
+        save_results_to_excel(result, baseline_costing, output_file)

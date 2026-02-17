@@ -63,6 +63,7 @@ def get_replacements(costing_data: CostingData) -> dict[str, str]:
         "M220108": "-",
         "M220109": "-",
         "M220111": "-",
+        "M220112": "-",
         "M220119": "-",
         "M220200": "-",
         "M220300": "-",

@@ -15,12 +15,17 @@
 1.2	&	Charged Particle Power	&	$P_{{ash}}$	&	PASH	&	MW \\
 1.3	&	Neutron Power	&	$P_{{neutrons}}$	&	PNEUTRON	&	MW \\
 1.4	&	Neutron Energy Multiplier	&	$M_N$	&	MN___	&	\\
-1.5	&	$P_{pump}$ capture efficiency	&	$\eta_{{pump}}$	&	ETAP__	&	\\
-1.6	&	Thermal Power	&	$P_{{TH}} = M_N P_n + P_{{ash}} + P_{{IN}} + \eta_p P_{{pump}}$	&	PTH___	&	MW \\
-1.7	&	Thermal conversion efficiency	&	$\eta_{{TH}}$	&	ETATH	&	\\
-1.8	&	Total (Gross) Electric Power	&	$P_{{ET}}$	&	PET___	&	MW \\
-1.9	&	Lost Power	&	$P_{{Lost}}$	&	PLOSS	&	MW \\
-\hline								
+1.5	&	DEC capture fraction	&	$f_{{dec}}$	&	FDEC__	&	\\
+1.6	&	DEC conversion efficiency	&	$\eta_{{de}}$	&	ETADE_	&	\\
+1.7	&	DEC Electric Power	&	$P_{{dee}} = f_{{dec}} \cdot \eta_{{de}} \cdot P_{{ash}}$	&	PDEE__	&	MW \\
+1.8	&	Ash Thermal Power	&	$P_{{wall}} = (1 - f_{{dec}}) \cdot P_{{ash}}$	&	PWALL_	&	MW \\
+1.9	&	$P_{pump}$ capture efficiency	&	$\eta_{{pump}}$	&	ETAP__	&	\\
+1.10	&	Thermal Power	&	$P_{{TH}} = M_N P_n + P_{{wall}} + P_{{IN}} + \eta_p P_{{pump}}$	&	PTH___	&	MW \\
+1.11	&	Thermal conversion efficiency	&	$\eta_{{TH}}$	&	ETATH	&	\\
+1.12	&	Thermal Electric Power	&	$P_{{the}} = \eta_{{TH}} \cdot P_{{TH}}$	&	PTHEL_	&	MW \\
+1.13	&	Total (Gross) Electric Power	&	$P_{{ET}} = P_{{the}} + P_{{dee}}$	&	PET___	&	MW \\
+1.14	&	Lost Power	&	$P_{{Lost}}$	&	PLOSS	&	MW \\
+\hline
 2	&	Recirculating power	&		&		&	\\
 \hline
 2.1	&	Power into coils 	&	$P_{coils}$ &	PCOILS	&	MW \\
@@ -31,9 +36,9 @@
 2.4.1	&	Tritium Systems	&	$P_{{t}}$	&	PTRIT	&	MW \\
 2.4.2	&	Housekeeping power	&	$P_{{h}}$	&	PHOUSE	&	MW \\
 2.5	&	Coil cooling systems	&	$P_{{cool}}$	&	PCOOL	&	MW \\
-2.5.3	&	Cryo vacuum pumping	&	$P_{{p}_c}$	&	PCRYO	&	MW \\
-2.6.	& Input power 	& $P_{IN}$	&	PINPUT	&	MW \\
-2.6.1	& Input power wall plug efficiency  &	$\eta_{IN}$ & ETAPIN	&	MW \\
+2.6	&	Cryo vacuum pumping	&	$P_{{p}_c}$	&	PCRYO	&	MW \\
+2.7	& Input power 	& $P_{IN}$	&	PINPUT	&	MW \\
+2.7.1	& Input power wall plug efficiency  &	$\eta_{IN}$ & ETAPIN	&	\\
 \hline								
 3	&	Output power	&		&		&	\\
 \hline
@@ -46,6 +51,13 @@
 \caption{Power balance for a steady-state magnetic fusion energy system.}
 \label{tab:powerbalance}
 \end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{Figures/power_flow_sankey.png}
+\caption{Power flow Sankey diagram showing energy partitioning from fusion to net electric output.}
+\label{fig:power_flow_sankey}
+\end{figure}
 
 ASHSPLITTEXT
 
