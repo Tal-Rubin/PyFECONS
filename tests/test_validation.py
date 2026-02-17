@@ -367,3 +367,70 @@ class TestWarnings:
         with warnings.catch_warnings():
             warnings.simplefilter("error")
             validate_inputs(inputs)  # should not warn
+
+
+# ---------------------------------------------------------------------------
+# Costing sanity checks (Q_sci, p_net, heating mismatch)
+# ---------------------------------------------------------------------------
+
+
+class TestCostingSanityChecks:
+    def test_q_sci_below_one_warns(self):
+        inputs = load_mfe_inputs()
+        # p_nrl < p_input → Q_sci < 1
+        inputs.basic.p_nrl = MW(30)
+        inputs.power_input.p_input = MW(50)
+        with pytest.warns(UserWarning, match="Q_sci.*< 1"):
+            validate_inputs(inputs)
+
+    def test_q_sci_above_one_no_warning(self):
+        inputs = load_mfe_inputs()
+        # Q_sci = 2600/50 = 52 >> 1
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            validate_inputs(inputs)
+
+    def test_p_net_nonpositive_warns(self):
+        inputs = load_mfe_inputs()
+        # Very low fusion power with high recirculating → p_net <= 0
+        inputs.basic.p_nrl = MW(100)
+        inputs.power_input.p_input = MW(50)
+        with pytest.warns(UserWarning, match="p_net.*non-positive"):
+            validate_inputs(inputs)
+
+    def test_p_net_positive_no_warning(self):
+        inputs = load_mfe_inputs()
+        # CATF defaults: p_nrl=2600, p_input=50 → large positive p_net
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            validate_inputs(inputs)
+
+    def test_heating_mismatch_warns(self):
+        inputs = load_mfe_inputs()
+        from pyfecons.inputs.supplementary_heating import SupplementaryHeating
+
+        inputs.supplementary_heating = SupplementaryHeating(
+            nbi_power=MW(30), icrf_power=MW(10)
+        )
+        # Total heating = 40 MW, p_input = 50 MW → mismatch of 10 MW
+        with pytest.warns(UserWarning, match="differs from p_input"):
+            validate_inputs(inputs)
+
+    def test_heating_match_no_warning(self):
+        inputs = load_mfe_inputs()
+        from pyfecons.inputs.supplementary_heating import SupplementaryHeating
+
+        inputs.supplementary_heating = SupplementaryHeating(
+            nbi_power=MW(40), icrf_power=MW(10)
+        )
+        # Total = 50 MW = p_input → no mismatch
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            validate_inputs(inputs)
+
+    def test_no_supplementary_heating_no_mismatch_warning(self):
+        inputs = load_mfe_inputs()
+        inputs.supplementary_heating = None
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            validate_inputs(inputs)

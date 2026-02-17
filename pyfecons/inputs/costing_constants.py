@@ -194,6 +194,24 @@ class CostingConstants:
     # CAS 70: O&M cost ($/MW/year)
     om_cost_per_mw_per_year: Unknown = Unknown(60)
 
+    # CAS 22.03: Cryoplant equipment reference scaling
+    # Calibrated from ITER cryoplant (~$200M for 30 MW electrical load)
+    cryo_reference_cost: M_USD = M_USD(200)
+    cryo_reference_p_cryo: MW = MW(30)
+    cryo_scaling_exponent: Ratio = Ratio(0.7)
+
+    # CAS 22.05.08: Pellet injector reference scaling
+    # ITER pellet injector ~$30M FOAK. NOAK ~$15M at 2 GW fusion power.
+    pellet_reference_cost: M_USD = M_USD(15)
+    pellet_reference_p_nrl: MW = MW(2000)
+    pellet_scaling_exponent: Ratio = Ratio(0.5)
+
+    # CAS 22.07: I&C reference scaling
+    # $85M at ~3000 MW_th (CATF MFE baseline). Exponent 0.5 for economy of scale.
+    ic_reference_cost: M_USD = M_USD(85)
+    ic_reference_p_th: MW = MW(3000)
+    ic_scaling_exponent: Ratio = Ratio(0.5)
+
     # Nested constants for specific subsystems
     inflation: InflationFactors = field(default_factory=InflationFactors)
     installation: InstallationConstants = field(default_factory=InstallationConstants)

@@ -3,17 +3,22 @@ from pyfecons.costing.calculations.conversions import inflation_2010_2024
 from pyfecons.costing.categories.cas220500 import CAS2205
 from pyfecons.enums import FuelType
 from pyfecons.inputs.basic import Basic
+from pyfecons.inputs.costing_constants import CostingConstants
 from pyfecons.inputs.fuel_handling import FuelHandling
 from pyfecons.units import M_USD
 
 
 def cas_2205_fuel_handling_and_storage_costs(
-    basic: Basic, fuel_handling: FuelHandling, power_table: PowerTable
+    basic: Basic,
+    fuel_handling: FuelHandling,
+    power_table: PowerTable,
+    constants: CostingConstants = None,
 ) -> CAS2205:
     # Cost Category 22.5 Fuel Handling and Storage
     cas2205 = CAS2205()
     cas2205 = compute_fuel_handling_and_storage_costs(fuel_handling, cas2205)
     cas2205 = compute_tritium_containment_costs(basic, power_table, cas2205)
+    cas2205 = compute_pellet_injector_costs(basic, fuel_handling, constants, cas2205)
     return cas2205
 
 
@@ -102,4 +107,32 @@ def compute_tritium_containment_costs(
         + OUT.C220506
         + OUT.C220507  # Tritium containment barriers
     )
+    return OUT
+
+
+def compute_pellet_injector_costs(
+    basic: Basic,
+    fuel_handling: FuelHandling,
+    constants: CostingConstants,
+    OUT: CAS2205,
+) -> CAS2205:
+    """Calculate pellet injection system costs (CAS 22.05.08).
+
+    Pellet injectors provide plasma fueling and ELM pacing. Cost scales with
+    fusion power (larger machines need higher fueling rate).
+
+    Reference: ITER pellet injector ~$30M FOAK. NOAK with learning ~$15M at 2 GW.
+    """
+    if constants is None:
+        OUT.C220508 = M_USD(0)
+    else:
+        OUT.C220508 = M_USD(
+            float(constants.pellet_reference_cost)
+            * (float(basic.p_nrl) / float(constants.pellet_reference_p_nrl))
+            ** float(constants.pellet_scaling_exponent)
+            * float(fuel_handling.learning_tenth_of_a_kind)
+        )
+
+    # Update total to include pellet injectors
+    OUT.C220500 = M_USD(float(OUT.C220500) + float(OUT.C220508))
     return OUT

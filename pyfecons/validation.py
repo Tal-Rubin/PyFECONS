@@ -13,6 +13,7 @@ Usage:
 
 import warnings
 
+from pyfecons.costing.calculations.power_balance import power_balance
 from pyfecons.enums import CoilMaterial, FuelType, FusionMachineType
 from pyfecons.exceptions import FieldError, ValidationError, ValidationWarning
 from pyfecons.inputs.all_inputs import AllInputs
@@ -516,3 +517,67 @@ def _validate_cross_field(
                 None,
                 "not set for DHe3 fuel -- will use default 0.97",
             )
+
+    # Q_sci < 1: plant consumes more heating power than it produces
+    q_sci_warned = False
+    if (
+        inputs.basic is not None
+        and inputs.power_input is not None
+        and inputs.basic.p_nrl is not None
+        and inputs.power_input.p_input is not None
+        and inputs.power_input.p_input > 0
+    ):
+        q_sci = inputs.basic.p_nrl / inputs.power_input.p_input
+        if q_sci < 1:
+            q_sci_warned = True
+            result.warn(
+                "PowerBalance",
+                "Q_sci",
+                round(q_sci, 3),
+                f"Q_sci = {q_sci:.3f} < 1 -- fusion power is less than injected heating power",
+            )
+
+    # p_net <= 0: plant produces no usable electricity
+    # Skip if Q_sci < 1 already warned (negative p_net is obvious in that case)
+    if (
+        not q_sci_warned
+        and not result.errors
+        and inputs.basic is not None
+        and inputs.power_input is not None
+    ):
+        try:
+            pt = power_balance(inputs.basic, inputs.power_input)
+            if pt.p_net <= 0:
+                result.warn(
+                    "PowerBalance",
+                    "p_net",
+                    f"{float(pt.p_net):.1f} MW",
+                    "net electric power is non-positive -- plant does not produce usable electricity",
+                )
+        except Exception:
+            pass  # skip if power balance can't be computed (shouldn't happen after field checks)
+
+    # Heating power mismatch: nbi + icrf vs p_input (MFE only — IFE uses laser drivers)
+    if (
+        machine_type == FusionMachineType.MFE
+        and inputs.supplementary_heating is not None
+        and inputs.power_input is not None
+    ):
+        pi = inputs.power_input
+        sh = inputs.supplementary_heating
+        nbi = float(sh.nbi_power) if sh.nbi_power is not None else 0.0
+        icrf = float(sh.icrf_power) if sh.icrf_power is not None else 0.0
+        ecrh = float(sh.ecrh_power) if sh.ecrh_power is not None else 0.0
+        lhcd = float(sh.lhcd_power) if sh.lhcd_power is not None else 0.0
+        total_heating = nbi + icrf + ecrh + lhcd
+        if pi.p_input is not None and total_heating > 0:
+            mismatch = abs(total_heating - float(pi.p_input))
+            tolerance = max(0.01 * float(pi.p_input), 1.0)  # 1% or 1 MW
+            if mismatch > tolerance:
+                result.warn(
+                    "SupplementaryHeating",
+                    "nbi_power + icrf_power + ecrh_power + lhcd_power",
+                    f"{total_heating:.1f} MW",
+                    f"heating sum ({nbi:.1f} + {icrf:.1f} + {ecrh:.1f} + {lhcd:.1f} = {total_heating:.1f} MW) "
+                    f"differs from p_input ({float(pi.p_input):.1f} MW) by {mismatch:.1f} MW",
+                )

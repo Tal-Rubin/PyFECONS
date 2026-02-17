@@ -9,6 +9,8 @@ class SupplementaryHeating:
     # see pg 90 https://cer.ucsd.edu/_files/publications/UCSD-CER-13-01.pdf
     nbi_power: MW = MW(50)
     icrf_power: MW = MW(0)
+    ecrh_power: MW = MW(0)  # Electron Cyclotron Resonance Heating (gyrotrons)
+    lhcd_power: MW = MW(0)  # Lower Hybrid Current Drive (klystrons)
     aries_at: HeatingRef = field(
         default_factory=lambda: HeatingRef(
             "ARIES-AT", "ICRF/LH", MW(37.441), 1.67, 2.3881
@@ -62,6 +64,16 @@ class SupplementaryHeating:
             "Average (NBI)", None, MW(167.6), 4.94, 7.0642
         )
     )
+    # ECRH: Gyrotron-based systems. ITER ECH ~$10M/MW FOAK, NOAK ~$5M/MW.
+    # Includes gyrotrons, transmission lines, launchers, power supplies.
+    average_ecrh: HeatingRef = field(
+        default_factory=lambda: HeatingRef("Average (ECRH)", "ECRH", MW(20), 3.5, 5.0)
+    )
+    # LHCD: Klystron-based systems. Similar to ECRH but slightly cheaper.
+    # Includes klystrons, waveguides, launchers, power supplies.
+    average_lhcd: HeatingRef = field(
+        default_factory=lambda: HeatingRef("Average (LHCD)", "LHCD", MW(30), 2.8, 4.0)
+    )
 
     def heating_refs(self):
         return [
@@ -77,4 +89,6 @@ class SupplementaryHeating:
             self.average,
             self.average_icrf,
             self.average_nbi,
+            self.average_ecrh,
+            self.average_lhcd,
         ]

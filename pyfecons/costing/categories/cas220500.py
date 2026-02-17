@@ -20,4 +20,5 @@ class CAS2205:
     C220505: M_USD = None
     C220506: M_USD = None
     C220507: M_USD = None  # Tritium containment barriers (D-T/D-D)
+    C220508: M_USD = None  # Pellet injection system
     C220500: M_USD = None

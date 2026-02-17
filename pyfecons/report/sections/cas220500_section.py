@@ -27,5 +27,6 @@ class CAS2205Section(ReportSection):
             "C220505": str(round(cas2205.C220505, 1)),
             "C220506": str(round(cas2205.C220506, 1)),
             "C220507": str(round(cas2205.C220507, 1)),
+            "C220508": str(round(cas2205.C220508, 1)),
             "C220500": str(round(cas2205.C220500, 1)),
         }

@@ -5,6 +5,72 @@
 
 ---
 
+## Missing & Underspecified Cost Accounts (2026-02-17)
+
+### New Feature: ECRH & LHCD Heating Systems (CAS 22.01.04.03 / .04)
+- Added `ecrh_power` and `lhcd_power` fields to `SupplementaryHeating` input (default 0 MW).
+- Added HeatingRef defaults: ECRH $5M/MW, LHCD $4M/MW (gyrotron/klystron system costs).
+- New cost category fields `C22010403` (ECRH) and `C22010404` (LHCD) in CAS 220104.
+- Updated template, report section, and validation (heating mismatch now sums all 4 types).
+
+### New Feature: Cryoplant Equipment Capital Cost (CAS 22.03.02)
+- Split CAS 2203 into `C220301` (auxiliary cooling, existing formula) and `C220302` (cryoplant equipment, new).
+- Cryoplant scales from ITER reference: $200M at 30 MW electrical load, exponent 0.7.
+- Reference values stored in `CostingConstants` for easy calibration.
+- For CATF baseline (p_cryo=0.5 MW): adds ~$8M.
+
+### New Feature: Pellet Injection System (CAS 22.05.08)
+- New `C220508` line item for cryogenic pellet injectors (fueling + ELM pacing).
+- Scales from ITER reference: $15M NOAK at 2 GW fusion power, exponent 0.5, with learning curve credit.
+- For CATF baseline (p_nrl=2600 MW): adds ~$10M.
+
+### Improvement: I&C Scales with Plant Size (CAS 22.07)
+- Replaced flat $85M with thermal-power-scaled formula: $85M reference at 3000 MW_th, exponent 0.5.
+- Small plant (500 MW_th): ~$35M. Large plant (5000 MW_th): ~$110M.
+- CATF baseline barely changes (~$83M vs $85M).
+
+### Modified Files
+- `pyfecons/inputs/supplementary_heating.py` — Added ECRH/LHCD power fields and HeatingRef defaults.
+- `pyfecons/inputs/costing_constants.py` — Added cryoplant, pellet injector, and I&C reference scaling constants.
+- `pyfecons/costing/categories/cas220104_supplementary_heating.py` — Added C22010403, C22010404.
+- `pyfecons/costing/categories/cas220300.py` — Added C220301, C220302 sub-accounts.
+- `pyfecons/costing/categories/cas220500.py` — Added C220508.
+- `pyfecons/costing/mfe/cas22/cas220104_supplementary_heating.py` — Added ECRH/LHCD cost calculation.
+- `pyfecons/costing/calculations/cas22/cas220300_auxilary_cooling.py` — Restructured with cryoplant sub-function.
+- `pyfecons/costing/calculations/cas22/cas220500_fuel_handling_and_storage.py` — Added pellet injector cost.
+- `pyfecons/costing/calculations/cas22/cas220700_instrumentation_and_control.py` — Added p_th scaling.
+- `pyfecons/costing/mfe/mfe.py` — Updated CAS 2203, 2205, 2207 calls with new parameters.
+- `pyfecons/costing/ife/ife.py` — Same pipeline updates for IFE.
+- `pyfecons/costing/shared/templates/CAS220300.tex` — Rewrote with sub-account descriptions.
+- `pyfecons/costing/shared/templates/CAS220500_DT.tex` — Added pellet injector row.
+- `pyfecons/costing/shared/templates/CAS220700.tex` — Added scaling description.
+- `pyfecons/costing/mfe/templates/CAS220104_MFE_DT.tex` — Added ECRH/LHCD entries.
+- `pyfecons/report/sections/cas220104_section.py` — Added ECRH/LHCD replacements.
+- `pyfecons/report/sections/cas220300_section.py` — Added sub-account replacements.
+- `pyfecons/report/sections/cas220500_section.py` — Added C220508 replacement.
+- `pyfecons/validation.py` — Updated heating mismatch to include ECRH + LHCD.
+
+### Related TODO Items
+- Completes TODO 8.5 items (except divertor, deferred — requires surface area calculations from TODO 1.2).
+
+---
+
+## Costing Sanity Warnings (2026-02-17)
+
+### New Feature: Q_sci, p_net, and Heating Mismatch Warnings
+- **Q_sci < 1**: Warns when fusion power is less than injected heating power (p_nrl / p_input < 1). Pure input check.
+- **p_net <= 0**: Warns when net electric power is non-positive (recirculating power exceeds gross electric). Runs power_balance() during validation to compute exact p_net; only checked when all required fields are valid.
+- **Heating power mismatch**: Warns when `nbi_power + icrf_power` differs from `p_input` by more than 1% (or 1 MW). Only triggers when `SupplementaryHeating` is provided with non-zero heating values.
+
+### Modified Files
+- `pyfecons/validation.py` — Added three new cross-field warnings in `_validate_cross_field()`. Imports `power_balance()` for p_net check.
+- `tests/test_validation.py` — Added `TestCostingSanityChecks` class with 7 tests covering all three warnings (positive and negative cases).
+
+### Related TODO Items
+- Completes TODO items 1.3 (Q_sci, p_net, heating mismatch) and 6.1 (input consistency checks).
+
+---
+
 ## Sensitivity Analysis in Report (2026-02-17)
 
 ### New Feature: LCOE Sensitivity Table in PDF Report

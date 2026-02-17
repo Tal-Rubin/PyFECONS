@@ -15,5 +15,12 @@ def cas_220104_supplementary_heating_costs(
 
     cas220104.C22010401 = M_USD(heating.average_nbi.cost_2023 * heating.nbi_power)
     cas220104.C22010402 = M_USD(heating.average_icrf.cost_2023 * heating.icrf_power)
-    cas220104.C220104 = M_USD(cas220104.C22010401 + cas220104.C22010402)
+    cas220104.C22010403 = M_USD(heating.average_ecrh.cost_2023 * heating.ecrh_power)
+    cas220104.C22010404 = M_USD(heating.average_lhcd.cost_2023 * heating.lhcd_power)
+    cas220104.C220104 = M_USD(
+        cas220104.C22010401
+        + cas220104.C22010402
+        + cas220104.C22010403
+        + cas220104.C22010404
+    )
     return cas220104

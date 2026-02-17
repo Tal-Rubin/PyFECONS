@@ -161,17 +161,21 @@ def GenerateCostingData(inputs: AllInputs) -> CostingData:
     data.cas2202 = cas_2202_main_and_secondary_coolant_costs(
         inputs.basic, data.power_table
     )
-    data.cas2203 = cas_2203_auxilary_cooling_costs(inputs.basic, data.power_table)
+    data.cas2203 = cas_2203_auxilary_cooling_costs(
+        inputs.basic, inputs.power_input, data.power_table, inputs.costing_constants
+    )
     data.cas2204 = cas_2204_radwaste_costs(data.power_table)
     data.cas2205 = cas_2205_fuel_handling_and_storage_costs(
-        inputs.basic, inputs.fuel_handling, data.power_table
+        inputs.basic, inputs.fuel_handling, data.power_table, inputs.costing_constants
     )
     data.cas2206 = cas_2206_other_reactor_plant_equipment_costs(data.power_table)
     data.cas220606 = cas_220606_remote_handling_costs(inputs.basic)
     # Add remote handling system cost into the overall 22.06 Other plant equipment total
     if data.cas220606.C220606 not in (None, 0):
         data.cas2206.C220600 = data.cas2206.C220600 + data.cas220606.C220606
-    data.cas2207 = cas_2207_instrumentation_and_control_costs()
+    data.cas2207 = cas_2207_instrumentation_and_control_costs(
+        data.power_table, inputs.costing_constants
+    )
     data.cas22 = cas22_reactor_plant_equipment_total_costs(
         data.cas2201_total_cost(), data.cas2200_total_cost(), inputs.basic.n_mod
     )

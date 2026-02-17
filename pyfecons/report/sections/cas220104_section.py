@@ -51,9 +51,13 @@ class CAS220104Section(ReportSection):
         self.replacements = {
             "C22010401": str(round(cas220104.C22010401, 3)),
             "C22010402": str(round(cas220104.C22010402, 3)),
+            "C22010403": str(round(cas220104.C22010403, 3)),
+            "C22010404": str(round(cas220104.C22010404, 3)),
             "C220104__": str(round(cas220104.C220104, 3)),
             "NBIPOWER": str(round(heating.nbi_power, 3)),
             "ICRFPOWER": str(round(heating.icrf_power, 3)),
+            "ECRHPOWER": str(round(heating.ecrh_power, 3)),
+            "LHCDPOWER": str(round(heating.lhcd_power, 3)),
             "HEATING_TABLE_ROWS": heating_table_rows,
         }
 
