@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from pyfecons.units import Meters, Ratio
+from pyfecons.units import Meters, Meters2, Meters3, Ratio
 
 
 @dataclass
@@ -25,3 +25,7 @@ class RadialBuild:
     gap2_t: Meters = None  # second air gap radial thickness
     lt_shield_t: Meters = None  # low-temperature shield radial thickness
     bioshield_t: Meters = None  # concrete bioshield radial thickness
+    # Optional physics validation inputs (user-provided, not computed from geometry)
+    plasma_volume: Meters3 = None  # Plasma volume [m³]
+    first_wall_area: Meters2 = None  # First wall inner surface area [m²]
+    divertor_area: Meters2 = None  # Divertor wetted area [m²] (tokamak only)

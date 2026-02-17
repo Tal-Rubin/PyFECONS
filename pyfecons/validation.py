@@ -13,7 +13,12 @@ Usage:
 
 import warnings
 
+from pyfecons.costing.calculations.fuel_physics import compute_ash_neutron_split
 from pyfecons.costing.calculations.power_balance import power_balance
+from pyfecons.costing.calculations.reactivity import (
+    min_density_for_power,
+    required_confinement_time,
+)
 from pyfecons.enums import CoilMaterial, FuelType, FusionMachineType
 from pyfecons.exceptions import FieldError, ValidationError, ValidationWarning
 from pyfecons.inputs.all_inputs import AllInputs
@@ -581,3 +586,120 @@ def _validate_cross_field(
                     f"heating sum ({nbi:.1f} + {icrf:.1f} + {ecrh:.1f} + {lhcd:.1f} = {total_heating:.1f} MW) "
                     f"differs from p_input ({float(pi.p_input):.1f} MW) by {mismatch:.1f} MW",
                 )
+
+    # --- Physics feasibility checks (only fire when optional inputs are provided) ---
+
+    # Gather burn fraction kwargs for fuel_physics and reactivity functions
+    _burn_kw = {}
+    if inputs.power_input is not None:
+        for attr in ("dd_f_T", "dd_f_He3", "dhe3_dd_frac", "dhe3_f_T"):
+            val = getattr(inputs.power_input, attr, None)
+            if val is not None:
+                _burn_kw[attr] = val
+
+    # Check 4: Minimum electron density for given fusion power and plasma volume
+    if (
+        inputs.basic is not None
+        and inputs.radial_build is not None
+        and inputs.radial_build.plasma_volume is not None
+        and inputs.basic.p_nrl is not None
+        and inputs.basic.fuel_type is not None
+    ):
+        try:
+            n_e = min_density_for_power(
+                float(inputs.basic.p_nrl),
+                float(inputs.radial_build.plasma_volume),
+                inputs.basic.fuel_type,
+                **{k: v for k, v in _burn_kw.items() if k in ("dd_f_T", "dd_f_He3")},
+            )
+            if n_e > 5e20:
+                result.warn(
+                    "PhysicsCheck",
+                    "electron_density",
+                    f"{n_e:.2e} m⁻³",
+                    f"minimum electron density {n_e:.2e} m⁻³ exceeds 5×10²⁰ m⁻³ "
+                    f"(best-case uniform plasma at peak ⟨σv⟩)",
+                )
+        except Exception:
+            pass  # skip if calculation fails (e.g., zero volume)
+
+    # Check 5: Neutron wall loading on first wall
+    if (
+        inputs.basic is not None
+        and inputs.radial_build is not None
+        and inputs.radial_build.first_wall_area is not None
+        and inputs.basic.p_nrl is not None
+        and inputs.basic.fuel_type is not None
+    ):
+        try:
+            _p_ash, p_neutron = compute_ash_neutron_split(
+                float(inputs.basic.p_nrl), inputs.basic.fuel_type, **_burn_kw
+            )
+            wall_loading = float(p_neutron) / float(inputs.radial_build.first_wall_area)
+            if wall_loading > 5.0:
+                result.warn(
+                    "PhysicsCheck",
+                    "wall_loading",
+                    f"{wall_loading:.1f} MW/m²",
+                    f"neutron wall loading {wall_loading:.1f} MW/m² exceeds 5 MW/m²",
+                )
+        except Exception:
+            pass
+
+    # Check 6: Divertor heat flux
+    if (
+        inputs.basic is not None
+        and inputs.radial_build is not None
+        and inputs.radial_build.divertor_area is not None
+        and inputs.basic.p_nrl is not None
+        and inputs.basic.fuel_type is not None
+        and inputs.power_input is not None
+        and inputs.power_input.p_input is not None
+    ):
+        try:
+            p_ash, _p_neutron = compute_ash_neutron_split(
+                float(inputs.basic.p_nrl), inputs.basic.fuel_type, **_burn_kw
+            )
+            f_dec = float(inputs.power_input.f_dec) if inputs.power_input.f_dec else 0.0
+            # Conservative: assume zero radiation — all non-neutron exhaust hits divertor
+            p_exhaust = float(p_ash) * (1 - f_dec) + float(inputs.power_input.p_input)
+            heat_flux = p_exhaust / float(inputs.radial_build.divertor_area)
+            if heat_flux > 15.0:
+                result.warn(
+                    "PhysicsCheck",
+                    "divertor_heat_flux",
+                    f"{heat_flux:.1f} MW/m²",
+                    f"divertor heat flux {heat_flux:.1f} MW/m² exceeds 15 MW/m² "
+                    f"(conservative: assumes zero radiation)",
+                )
+        except Exception:
+            pass
+
+    # Check 7: Required confinement time
+    if (
+        inputs.basic is not None
+        and inputs.radial_build is not None
+        and inputs.radial_build.plasma_volume is not None
+        and inputs.basic.p_nrl is not None
+        and inputs.basic.fuel_type is not None
+        and inputs.power_input is not None
+        and inputs.power_input.p_input is not None
+    ):
+        try:
+            tau_e = required_confinement_time(
+                float(inputs.basic.p_nrl),
+                float(inputs.radial_build.plasma_volume),
+                inputs.basic.fuel_type,
+                float(inputs.power_input.p_input),
+                **_burn_kw,
+            )
+            if tau_e > 30.0:
+                result.warn(
+                    "PhysicsCheck",
+                    "confinement_time",
+                    f"{tau_e:.1f} s",
+                    f"minimum required τ_E = {tau_e:.1f} s exceeds 30 s "
+                    f"(best-case uniform plasma at peak ⟨σv⟩, zero radiation)",
+                )
+        except Exception:
+            pass

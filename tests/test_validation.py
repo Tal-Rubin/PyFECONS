@@ -9,7 +9,17 @@ from pyfecons.enums import FuelType, FusionMachineType, MagnetMaterialType, Magn
 from pyfecons.exceptions import ValidationError
 from pyfecons.inputs.all_inputs import AllInputs
 from pyfecons.inputs.magnet import Magnet
-from pyfecons.units import HZ, MW, Count, Meters, Percent, Ratio, Years
+from pyfecons.units import (
+    HZ,
+    MW,
+    Count,
+    Meters,
+    Meters2,
+    Meters3,
+    Percent,
+    Ratio,
+    Years,
+)
 from pyfecons.validation import validate_inputs
 
 
@@ -431,6 +441,118 @@ class TestCostingSanityChecks:
     def test_no_supplementary_heating_no_mismatch_warning(self):
         inputs = load_mfe_inputs()
         inputs.supplementary_heating = None
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            validate_inputs(inputs)
+
+
+# ---------------------------------------------------------------------------
+# Physics feasibility checks (density, wall loading, heat flux)
+# ---------------------------------------------------------------------------
+
+
+class TestPhysicsFeasibilityChecks:
+    def test_catf_defaults_with_areas_no_warning(self):
+        """CATF MFE with plausible areas/volume should pass all physics checks."""
+        inputs = load_mfe_inputs()
+        # CATF now includes plasma_volume=215, first_wall_area=426, divertor_area=50
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            validate_inputs(inputs)
+
+    def test_density_warning_tiny_volume(self):
+        """Tiny plasma volume with high power → unreasonable density."""
+        inputs = load_mfe_inputs()
+        inputs.radial_build.plasma_volume = Meters3(1)  # 1 m³ for 2600 MW
+        with pytest.warns(UserWarning, match="electron_density.*exceeds"):
+            validate_inputs(inputs)
+
+    def test_density_no_warning_without_volume(self):
+        """When plasma_volume is None, density check is skipped."""
+        inputs = load_mfe_inputs()
+        inputs.radial_build.plasma_volume = None
+        inputs.radial_build.first_wall_area = None
+        inputs.radial_build.divertor_area = None
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            validate_inputs(inputs)
+
+    def test_wall_loading_warning_small_area(self):
+        """Small first wall area with high power → excessive wall loading."""
+        inputs = load_mfe_inputs()
+        inputs.radial_build.first_wall_area = Meters2(10)  # 10 m² for 2600 MW
+        inputs.radial_build.plasma_volume = None  # avoid density warning
+        inputs.radial_build.divertor_area = None
+        with pytest.warns(UserWarning, match="wall_loading.*exceeds"):
+            validate_inputs(inputs)
+
+    def test_wall_loading_no_warning_without_area(self):
+        """When first_wall_area is None, wall loading check is skipped."""
+        inputs = load_mfe_inputs()
+        inputs.radial_build.first_wall_area = None
+        inputs.radial_build.plasma_volume = None
+        inputs.radial_build.divertor_area = None
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            validate_inputs(inputs)
+
+    def test_heat_flux_warning_small_divertor(self):
+        """Small divertor area with high power → excessive heat flux."""
+        inputs = load_mfe_inputs()
+        inputs.radial_build.divertor_area = Meters2(1)  # 1 m² for 2600 MW
+        inputs.radial_build.plasma_volume = None  # avoid density warning
+        inputs.radial_build.first_wall_area = None
+        with pytest.warns(UserWarning, match="divertor_heat_flux.*exceeds"):
+            validate_inputs(inputs)
+
+    def test_heat_flux_no_warning_without_area(self):
+        """When divertor_area is None, heat flux check is skipped."""
+        inputs = load_mfe_inputs()
+        inputs.radial_build.divertor_area = None
+        inputs.radial_build.plasma_volume = None
+        inputs.radial_build.first_wall_area = None
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            validate_inputs(inputs)
+
+    def test_pb11_no_wall_loading_warning(self):
+        """PB11 is aneutronic — wall loading should be ~0 regardless of area."""
+        inputs = load_mfe_inputs()
+        inputs.basic.fuel_type = FuelType.PB11
+        inputs.radial_build.first_wall_area = Meters2(10)  # tiny area
+        inputs.radial_build.plasma_volume = None
+        inputs.radial_build.divertor_area = None
+        # PB11 has zero neutrons → wall loading = 0 → no warning
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            validate_inputs(inputs)
+
+    def test_confinement_time_no_warning_catf(self):
+        """CATF DT baseline: τ_E ≈ 0.7 s, well under 30s threshold."""
+        inputs = load_mfe_inputs()
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            validate_inputs(inputs)
+
+    def test_confinement_time_warning_extreme(self):
+        """PB11 at 300 keV stores 20x more energy per particle than DT at 15 keV.
+        Large volume + high T → τ_E > 30 s.
+        PB11, 2600 MW, 10000 m³ → τ_E ≈ 51 s > 30 s threshold.
+        """
+        inputs = load_mfe_inputs()
+        inputs.basic.fuel_type = FuelType.PB11
+        inputs.radial_build.plasma_volume = Meters3(10000)
+        inputs.radial_build.first_wall_area = None
+        inputs.radial_build.divertor_area = None
+        with pytest.warns(UserWarning, match="confinement_time.*exceeds"):
+            validate_inputs(inputs)
+
+    def test_confinement_time_no_warning_without_volume(self):
+        """When plasma_volume is None, confinement time check is skipped."""
+        inputs = load_mfe_inputs()
+        inputs.radial_build.plasma_volume = None
+        inputs.radial_build.first_wall_area = None
+        inputs.radial_build.divertor_area = None
         with warnings.catch_warnings():
             warnings.simplefilter("error")
             validate_inputs(inputs)

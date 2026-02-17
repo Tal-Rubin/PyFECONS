@@ -81,6 +81,14 @@ def Generate() -> AllInputs:
             gap2_t=Meters(0.5),
             lt_shield_t=Meters(0.3),
             bioshield_t=Meters(1),
+            # Physics validation inputs (computed from torus geometry)
+            # V_plasma = κ × 2π²R₀a² = 3.0 × 2π² × 3.0 × 1.1² ≈ 215 m³
+            plasma_volume=Meters3(215),
+            # A_fw = κ × 4π²R₀ × a_fw = 3.0 × 4π² × 3.0 × 1.2 ≈ 426 m²
+            # where a_fw = plasma_t + vacuum_t = 1.2 m
+            first_wall_area=Meters2(426),
+            # Divertor wetted area estimate (power plant with flux expansion)
+            divertor_area=Meters2(50),
         ),
         # TODO clarify where shield fractions come from
         shield=Shield(

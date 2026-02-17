@@ -45,6 +45,7 @@ from pyfecons.report.sections.cas900000_section import CAS90Section
 from pyfecons.report.sections.cost_table_section import CostTableSection
 from pyfecons.report.sections.lcoe_section import LcoeSection
 from pyfecons.report.sections.npv_section import NpvSection
+from pyfecons.report.sections.physics_checks_section import PhysicsChecksSection
 from pyfecons.report.sections.power_table_section import PowerTableSection
 from pyfecons.report.sections.sensitivity_section import SensitivitySection
 from pyfecons.sensitivity import SensitivityResult
@@ -59,6 +60,7 @@ def get_report_sections(
     fusion_machine_type = inputs.basic.fusion_machine_type
     sections: List[ReportSection] = [
         PowerTableSection(costing_data.power_table, inputs.basic, inputs.power_input),
+        PhysicsChecksSection(inputs.basic, inputs.power_input, inputs.radial_build),
         CAS10Section(costing_data.cas10, inputs.basic),
         CAS21Section(costing_data.cas21),
         CAS220101Section(

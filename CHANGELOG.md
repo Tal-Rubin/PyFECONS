@@ -5,6 +5,71 @@
 
 ---
 
+## Physics Feasibility Checks & Report Section (2026-02-17)
+
+### New Feature: Physics Feasibility Checks (Checks 4-7)
+Building on the costing sanity warnings (Q_sci, p_net, heating mismatch), added four physics
+feasibility checks using a best-case 0D plasma model (uniform plasma at peak reactivity
+temperature, zero radiation losses). These are lower bounds — actual operating conditions
+will be more demanding.
+
+- **Check 4 — Minimum electron density**: `n_e = min_density_for_power(P_fusion, V_plasma, fuel_type)`.
+  Warns if n_e > 5×10²⁰ m⁻³ (Greenwald-like limit). Uses peak ⟨σv⟩ temperature per fuel.
+- **Check 5 — Neutron wall loading**: `Γ_n = P_neutron / A_firstwall`. Warns if > 5 MW/m².
+  Requires optional `first_wall_area` input in RadialBuild.
+- **Check 6 — Divertor heat flux**: `q_div = (P_ash × (1 - f_dec) + P_input) / A_divertor`.
+  Warns if > 15 MW/m². Requires optional `divertor_area` input in RadialBuild.
+- **Check 7 — Required confinement time**: `τ_E = W_plasma / (P_ash + P_input)`, where
+  `W_plasma = (3/2) × particle_factor × n_e × kT × V`. Warns if τ_E > 30 s (no device has
+  achieved this; ITER targets ~3-5 s). Particle factor accounts for ion species per fuel type
+  (DT=2, DD=2, DHe3=5/3, PB11=4/3).
+
+CATF MFE baseline results: n_e = 2.57×10²⁰ m⁻³, Γ_n = 4.87 MW/m², q_div = 11.5 MW/m²,
+τ_E = 0.70 s — all within thresholds (no warnings).
+
+### New Feature: Physics Checks PDF Report Section
+All physics check values now appear in a LaTeX table in the generated PDF report, between
+the power table and CAS 10. Rows are conditional based on which optional inputs are provided:
+
+| Row | Shown when | Threshold |
+|-----|-----------|-----------|
+| Q_sci | Always | < 1 |
+| P_net | Always | ≤ 0 MW |
+| n_e (min) | `plasma_volume` provided | > 5×10²⁰ m⁻³ |
+| τ_E (min) | `plasma_volume` provided | > 30 s |
+| Γ_n | `first_wall_area` provided | > 5 MW/m² |
+| q_div | `divertor_area` provided | > 15 MW/m² |
+
+Status column shows "OK" or **WARNING** for each row.
+
+### New Files
+- `pyfecons/costing/calculations/reactivity.py` — 0D plasma physics: `volumetric_reaction_rate()`,
+  `min_density_for_power()`, `required_confinement_time()`, `PEAK_TEMPERATURE` and
+  `PARTICLE_FACTOR` dicts, reactivity curves from NRL Plasma Formulary.
+- `pyfecons/report/sections/physics_checks_section.py` — `PhysicsChecksSection(ReportSection)`
+  generating conditional LaTeX table with `_build_checks_table()` helper.
+- `pyfecons/costing/shared/templates/PhysicsChecks.tex` — Shared template for MFE and IFE.
+
+### Modified Files
+- `pyfecons/validation.py` — Added Checks 4-7 (density, wall loading, heat flux, confinement time).
+  All checks use `compute_ash_neutron_split()` for fuel-dependent power splits.
+- `pyfecons/inputs/radial_build.py` — Added optional fields: `plasma_volume` (Meters3),
+  `first_wall_area` (Meters2), `divertor_area` (Meters2).
+- `pyfecons/report/utils.py` — Registered `PhysicsChecksSection` after `PowerTableSection`.
+- `pyfecons/costing/mfe/templates/Costing_ARPA-E_MFE_Modified.tex` — Added `\input{Modified/PhysicsChecks.tex}`.
+- `pyfecons/costing/ife/templates/Costing_ARPA-E_IFE_Modified.tex` — Added `\input{Modified/PhysicsChecks.tex}`.
+- `customers/CATF/mfe/DefineInputs.py` — Added `plasma_volume=Meters3(215)`,
+  `first_wall_area=Meters2(426)`, `divertor_area=Meters2(50)`.
+- `tests/test_reactivity.py` — New test file: 25+ tests for reactivity curves, density, τ_E.
+- `tests/test_validation.py` — Added `TestPhysicsFeasibilityChecks` class (12+ tests for Checks 4-7).
+
+### Related TODO Items
+- Completes TODO 1.3 (wall loading and heat flux warnings).
+- Partially completes TODO 1.2 (surface areas as optional inputs rather than derived from geometry).
+- Completes TODO 9.1 (validation layer with physics warnings).
+
+---
+
 ## Missing & Underspecified Cost Accounts (2026-02-17)
 
 ### New Feature: ECRH & LHCD Heating Systems (CAS 22.01.04.03 / .04)
