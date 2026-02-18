@@ -11,16 +11,6 @@ class VacuumSystem:
     # Scaling parameters INPUTS
     learning_credit: Ratio = None
 
-    # Reference values for scaling
-    # TODO confirm these units
-    spool_ir: Meters = None
-    spool_or: Meters = None
-    door_irb: Meters = None
-    door_orb: Meters = None
-    door_irc: Meters = None
-    door_orc: Meters = None
-    spool_height: Meters = None
-
     # VACUUM PUMPING 22.1.6.3
     cost_pump: USD = None
     # m^3 capable of being pumped by 1 pump

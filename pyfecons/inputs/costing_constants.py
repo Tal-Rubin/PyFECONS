@@ -95,6 +95,16 @@ class VacuumSystemConstants:
     roughing_pump_base_cost: USD = USD(120000)
     roughing_pump_factor: Ratio = Ratio(2.85)
 
+    # ARIES reference geometry for MFE vessel cost scaling (Waganer et al. 2006)
+    # These are the denominator in the geometry scaling factor — constant for all designs.
+    aries_spool_ir: Meters = Meters(2.25)
+    aries_spool_or: Meters = Meters(3.15)
+    aries_door_irb: Meters = Meters(6.0)
+    aries_door_orb: Meters = Meters(6.25)
+    aries_door_irc: Meters = Meters(7.81)
+    aries_door_orc: Meters = Meters(8.06)
+    aries_spool_height: Meters = Meters(9.0)
+
 
 @dataclass
 class CostingConstants:

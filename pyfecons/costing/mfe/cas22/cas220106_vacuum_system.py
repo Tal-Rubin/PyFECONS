@@ -107,11 +107,11 @@ def cas_220106_vacuum_system_costs(
         cas220106.vessel_costs.port_enclosures,
     ]:
         geometry_factor = (
-            (syst_spool_ir / vacuum_system.spool_ir)
-            * (syst_height / vacuum_system.spool_height)
+            (syst_spool_ir / constants.aries_spool_ir)
+            * (syst_height / constants.aries_spool_height)
             if cost.name == "Spool assembly"
-            else (syst_doors_ir / vacuum_system.door_irb)
-            * (syst_height / vacuum_system.spool_height)
+            else (syst_doors_ir / constants.aries_door_irb)
+            * (syst_height / constants.aries_spool_height)
         )
         cost.total_mass = cost.total_mass * geometry_factor
 

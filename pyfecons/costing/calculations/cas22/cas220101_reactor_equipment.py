@@ -52,9 +52,9 @@ def compute_reactor_equipment_costs(
     cas220101 = compute_inner_radii(fusion_machine_type, radial_build, cas220101)
     cas220101 = compute_outer_radii(fusion_machine_type, radial_build, cas220101)
 
-    if (
-        fusion_machine_type == FusionMachineType.MFE
-        and confinement_type == ConfinementType.SPHERICAL_TOKAMAK
+    if fusion_machine_type == FusionMachineType.MFE and confinement_type in (
+        ConfinementType.SPHERICAL_TOKAMAK,
+        ConfinementType.CONVENTIONAL_TOKAMAK,
     ):
         cas220101 = compute_volume_mfe_tokamak(radial_build, cas220101)
         # must be cylindrical in all cases

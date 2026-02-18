@@ -5,6 +5,38 @@
 
 ---
 
+## CONVENTIONAL_TOKAMAK Support & Customer Test Cases (2026-02-18)
+
+### Bug Fix: CONVENTIONAL_TOKAMAK in CAS 220101
+- **Issue**: `cas220101_reactor_equipment.py` only supported `SPHERICAL_TOKAMAK` for MFE volume
+  calculations, causing `ValueError` for any conventional tokamak customer.
+- **Fix**: Added `ConfinementType.CONVENTIONAL_TOKAMAK` to the dispatch condition alongside
+  `SPHERICAL_TOKAMAK` (both use identical torus geometry via `compute_volume_mfe_tokamak()`).
+- **File**: `pyfecons/costing/calculations/cas22/cas220101_reactor_equipment.py`
+
+### Refactoring: ARIES Vacuum System Reference Dimensions (TODO §9.2)
+- **Issue**: `VacuumSystem` input contained 7 ARIES reference geometry fields (`spool_ir`,
+  `spool_or`, `door_irb`, `door_orb`, `door_irc`, `door_orc`, `spool_height`) used as
+  denominators in the vessel cost scaling factor. These are constants of the ARIES cost-scaling
+  law (Waganer et al. 2006), not design parameters — but each customer was specifying them,
+  leading to incorrect values in SPARC/ARC.
+- **Fix**: Moved all 7 fields to `VacuumSystemConstants` as `aries_*` prefixed constants with
+  ARIES baseline values. Updated MFE `cas220106_vacuum_system.py` to read from constants.
+  Removed fields from `VacuumSystem` input and all customer files.
+- **Files**: `pyfecons/inputs/costing_constants.py`, `pyfecons/inputs/vacuum_system.py`,
+  `pyfecons/costing/mfe/cas22/cas220106_vacuum_system.py`, all MFE customer `DefineInputs.py`
+
+### New Customer Test Cases: SPARC and ARC
+- **SPARC** (`customers/SPARC/mfe/DefineInputs.py`): CFS compact high-field tokamak.
+  R₀=1.85m, a=0.57m, B_max=20T, P_fusion=140MW, 25MW ICRF, REBCO HTS, DT.
+  Experimental FOAK — LCOE not meaningful, used for capital cost validation.
+- **ARC** (`customers/ARC/mfe/DefineInputs.py`): MIT/CFS pilot plant based on SPARC technology.
+  R₀=3.3m, a=1.13m, B_max=23T, P_fusion=525MW, 39MW ICRF+LHCD, REBCO HTS, FLiBe blanket,
+  18 demountable TF coils. Power balance validated: p_th=629 MW matches published 628 MW
+  (Sorbom et al. 2015) with mn=1.15, eta_th=0.50.
+
+---
+
 ## Physics Feasibility Checks & Report Section (2026-02-17)
 
 ### New Feature: Physics Feasibility Checks (Checks 4-7)
@@ -523,6 +555,11 @@ Status column shows "OK" or **WARNING** for each row.
 ---
 
 ## Bug Fixes
+
+### Pie chart legend percentages mismatch (2026-02-17)
+- **Issue**: Figure 12 (% of Reactor Plant Equipment) showed different percentages in the pie chart slices vs the legend. The pie chart only included 10 subcategories (C220101–C220111), but the legend percentages were computed against C220100 which also includes C220112 (Isotope Separation), C220119 (Scheduled Replacement), and C220120 (Safety & Hazard Mitigation).
+- **Fix**: Added all three missing subcategories to the chart so it now shows the complete CAS 22.01 breakdown. Also changed legend percentage calculation to use sum of displayed values (matching matplotlib's autopct internally) for robustness. Removed unused `total` parameter from `_create_pie_chart()`.
+- **Files**: `pyfecons/figures/cost_accounting_pie_charts.py`
 
 ### LCOE levelization of annual costs (CAS70, CAS80, CAS90)
 - **Issue**: O&M and fuel costs were not properly levelized. CAS70 used an inline growing-annuity formula but CAS80 (fuel) was not levelized at all — raw annual cost was fed directly into LCOE. CRF calculation was duplicated across CAS70 and CAS90. The original OPEX formula `(1 + inflation)^plant_lifetime` gave a future value rather than a discounted levelized cost.

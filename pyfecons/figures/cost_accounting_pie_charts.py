@@ -23,35 +23,29 @@ class CostAccountingPieCharts:
         Returns:
             A dictionary mapping figure names to PDF bytes
         """
-        tcc = costing_data.cas90.C990000
-        direct_costs = costing_data.cas20.C200000
-        reactor_equip = costing_data.cas22.C220100
-
         figures = {}
 
         # Chart 1: % of TCC
         figures["tcc_pie_chart"] = CostAccountingPieCharts._create_tcc_chart(
-            costing_data, tcc
+            costing_data
         )
 
         # Chart 2: % of Direct Costs
         figures["direct_costs_pie_chart"] = (
-            CostAccountingPieCharts._create_direct_costs_chart(
-                costing_data, direct_costs
-            )
+            CostAccountingPieCharts._create_direct_costs_chart(costing_data)
         )
 
         # Chart 3: % of Reactor Plant Equipment
         figures["reactor_equip_pie_chart"] = (
             CostAccountingPieCharts._create_reactor_equip_chart(
-                costing_data, reactor_equip, costing_data.fusion_machine_type
+                costing_data, costing_data.fusion_machine_type
             )
         )
 
         return figures
 
     @staticmethod
-    def _create_tcc_chart(costing_data: CostingData, tcc: float) -> bytes:
+    def _create_tcc_chart(costing_data: CostingData) -> bytes:
         """Create pie chart for % of TCC breakdown."""
         labels = [
             "Preconstruction",
@@ -79,13 +73,11 @@ class CostAccountingPieCharts:
         ]
 
         return CostAccountingPieCharts._create_pie_chart(
-            labels, values, tcc, "% of Total Capital Cost", colors
+            labels, values, "% of Total Capital Cost", colors
         )
 
     @staticmethod
-    def _create_direct_costs_chart(
-        costing_data: CostingData, direct_costs: float
-    ) -> bytes:
+    def _create_direct_costs_chart(costing_data: CostingData) -> bytes:
         """Create pie chart for % of Direct Costs breakdown."""
         labels = [
             "Structures/Site",
@@ -122,13 +114,12 @@ class CostAccountingPieCharts:
         ]
 
         return CostAccountingPieCharts._create_pie_chart(
-            labels, values, direct_costs, "% of Direct Costs", colors
+            labels, values, "% of Direct Costs", colors
         )
 
     @staticmethod
     def _create_reactor_equip_chart(
         costing_data: CostingData,
-        reactor_equip: float,
         fusion_machine_type: FusionMachineType,
     ) -> bytes:
         """Create pie chart for % of Reactor Plant Equipment breakdown."""
@@ -145,6 +136,9 @@ class CostAccountingPieCharts:
                 "Target Factory",
                 "Direct Energy Conversion",
                 "Assembly and Installation",
+                "Isotope Separation",
+                "Scheduled Replacement",
+                "Safety & Hazard Mitigation",
             ]
         else:  # MFE
             labels = [
@@ -158,6 +152,9 @@ class CostAccountingPieCharts:
                 "Divertor",
                 "Direct Energy Conversion",
                 "Assembly and Installation",
+                "Isotope Separation",
+                "Scheduled Replacement",
+                "Safety & Hazard Mitigation",
             ]
         values = [
             costing_data.cas220101.C220101,
@@ -170,9 +167,22 @@ class CostAccountingPieCharts:
             costing_data.cas220108.C220108,
             costing_data.cas220109.C220109,
             costing_data.cas220111.C220111,
+            (
+                costing_data.cas220112.C220112
+                if costing_data.cas220112.C220112 is not None
+                else 0
+            ),
+            (
+                costing_data.cas220119.C220119
+                if costing_data.cas220119.C220119 is not None
+                else 0
+            ),
+            (
+                costing_data.cas220120.C220120
+                if costing_data.cas220120.C220120 is not None
+                else 0
+            ),
         ]
-        # Colors matching the image descriptions
-        # First Wall & Blanket: dark green, Primary Structure: dark teal
         colors = [
             "darkgreen",  # First Wall & Blanket
             "orange",  # High Temp. Shield
@@ -184,17 +194,19 @@ class CostAccountingPieCharts:
             "darkred",  # Divertor
             "black",  # Direct Energy Conversion
             "purple",  # Assembly and Installation
+            "gold",  # Isotope Separation
+            "salmon",  # Scheduled Replacement
+            "grey",  # Safety & Hazard Mitigation
         ]
 
         return CostAccountingPieCharts._create_pie_chart(
-            labels, values, reactor_equip, "% of Reactor Plant Equipment", colors
+            labels, values, "% of Reactor Plant Equipment", colors
         )
 
     @staticmethod
     def _create_pie_chart(
         labels: list[str],
         values: list[float],
-        total: float,
         title: str,
         colors: list[str],
     ) -> bytes:
@@ -214,8 +226,12 @@ class CostAccountingPieCharts:
 
         filtered_labels, filtered_values, filtered_colors = zip(*filtered_data)
 
-        # Calculate percentages
-        percentages = [v / total * 100 if total > 0 else 0 for v in filtered_values]
+        # Calculate percentages using sum of displayed values (matching matplotlib's autopct)
+        displayed_total = sum(filtered_values)
+        percentages = [
+            v / displayed_total * 100 if displayed_total > 0 else 0
+            for v in filtered_values
+        ]
 
         # Create the pie chart - slightly smaller to fit more on a page
         fig, ax = plt.subplots(figsize=(9, 7))
