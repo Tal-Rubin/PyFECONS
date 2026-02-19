@@ -18,6 +18,10 @@ def cas80_annualized_fuel_costs(
     basic: Basic, financial: Financial, constants: CostingConstants
 ) -> CAS80:
     # Cost Category 80: Annualized Fuel Cost (AFC)
+    # TODO: The PFR target cost interpolation below prices target manufacturing,
+    # not raw feedstock. Once CAS220108 properly prices target factory capital,
+    # IFE CAS80 should switch to the same fuel isotope formula as MFE
+    # (fuel-specific consumable cost per reaction).
     cas80 = CAS80()
 
     # Simple interpolation of yearly total target cost from interpolated graph 2 below. See 22.1.8 for more.
