@@ -1,58 +1,28 @@
-from pyfecons.costing.accounting.power_table import PowerTable
 from pyfecons.costing.categories.cas200000 import CAS20
 from pyfecons.costing.categories.cas300000 import CAS30
 from pyfecons.inputs.basic import Basic
 from pyfecons.inputs.costing_constants import CostingConstants
-from pyfecons.inputs.lsa_levels import LsaLevels
 from pyfecons.units import M_USD
 
 
 def cas30_capitalized_indirect_service_costs(
     basic: Basic,
-    lsa_levels: LsaLevels,
-    power_table: PowerTable,
     cas20: CAS20,
     constants: CostingConstants,
 ) -> CAS30:
-    # Cost Category 30 Capitalized Indirect Service Costs (CISC)
+    """CAS30: Indirect service costs.
+
+    Computed as a fraction of total direct cost (CAS20), scaled by
+    construction time relative to a reference duration:
+
+        CAS30 = indirect_fraction * CAS20 * (t_con / t_ref)
+
+    Default: 20% of CAS20 at 6-year reference construction time.
+    """
     cas30 = CAS30()
-    p_net = power_table.p_net
-
-    # Cost Category 31 – Field Indirect Costs - previously Cost Category 93
-    # 0.060 * C_90; %NMOD*(/1e6)/A_power * A_C_93 #Field Office Engineering and Services  Table 3.2-VII of Ref. [1]
-    cas30.C310000LSA = M_USD(lsa_levels.fac_93[lsa_levels.lsa - 1] * cas20.C200000)
-    cas30.C310000 = M_USD(
-        (p_net / constants.indirect_reference_power_mw) ** -0.5
-        * p_net
-        * constants.field_indirect_cost_coeff
-        * basic.construction_time
+    cas30.C300000 = M_USD(
+        constants.indirect_fraction
+        * cas20.C200000
+        * (basic.construction_time / constants.reference_construction_time)
     )
-
-    # Cost Category 32  – Construction Supervision - previously Cost Category 91
-    cas30.C320000LSA = M_USD(lsa_levels.fac_91[lsa_levels.lsa - 1] * cas20.C200000)
-    # this takes the 316$/kW and divides by 6 to obtain a cost per year of 0.053$/MW and applies to PE,
-    # which is the net electric.  There are arguments that this should be applied to the gross electric,
-    # if we consider demonstration plants, but this code is not set up for FOAK currently.
-    cas30.C320000 = M_USD(
-        (p_net / constants.indirect_reference_power_mw) ** -0.5
-        * p_net
-        * constants.construction_supervision_coeff
-        * basic.construction_time
-    )
-
-    # Cost Category 33 – Commissioning and Start-up Costs
-
-    # Cost Category 34 – Demonstration Test Run
-
-    # Cost Category 35 – Design Services Offsite
-    cas30.C350000 = M_USD(
-        (p_net / constants.indirect_reference_power_mw) ** -0.5
-        * p_net
-        * constants.design_services_coeff
-        * basic.construction_time
-    )
-    # 0.052 * C_90; %NMOD*(/1e6)/A_power * A_C_92; %Home Office Engineering and Services  Table 3.2-VII of Ref. [1]
-    cas30.C350000LSA = M_USD(lsa_levels.fac_92[lsa_levels.lsa - 1] * cas20.C200000)
-
-    cas30.C300000 = M_USD(cas30.C310000 + cas30.C320000 + cas30.C350000)
     return cas30

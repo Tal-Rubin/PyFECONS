@@ -114,7 +114,7 @@ class CostingConstants:
     licensing_dd: M_USD = M_USD(3)
     licensing_dhe3: M_USD = M_USD(1)
     licensing_pb11: M_USD = M_USD(0.1)
-    licensing_time_dt: Unknown = Unknown(2.5)
+    licensing_time_dt: Unknown = Unknown(2.0)
     licensing_time_dd: Unknown = Unknown(1.5)
     licensing_time_dhe3: Unknown = Unknown(0.75)
     licensing_time_pb11: Unknown = Unknown(0.0)
@@ -183,11 +183,9 @@ class CostingConstants:
     # CAS 29: Contingency rate (fraction, applied across CAS 10/21/29/50)
     contingency_rate: Ratio = Ratio(0.1)
 
-    # CAS 30: Indirect service cost coefficients (M USD / MW / year)
-    field_indirect_cost_coeff: Unknown = Unknown(0.02)
-    construction_supervision_coeff: Unknown = Unknown(0.05)
-    design_services_coeff: Unknown = Unknown(0.03)
-    indirect_reference_power_mw: MW = MW(150)
+    # CAS 30: Indirect service costs
+    indirect_fraction: Ratio = Ratio(0.20)  # fraction of CAS20 (total direct cost)
+    reference_construction_time: Unknown = Unknown(6.0)  # years (scaling baseline)
 
     # CAS 50: Supplementary costs
     shipping: M_USD = M_USD(8)
@@ -198,8 +196,7 @@ class CostingConstants:
     fuel_load_reference_power_mw: MW = MW(150)
     decommissioning: M_USD = M_USD(200)
 
-    # CAS 60: Interest during construction coefficient (M USD / MW / year)
-    idc_coeff: Unknown = Unknown(0.099)
+    # CAS 60: no constants needed — uses first-principles f_IDC formula
 
     # CAS 70: O&M cost ($/MW/year)
     om_cost_per_mw_per_year: Unknown = Unknown(60)

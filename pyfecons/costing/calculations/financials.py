@@ -1,6 +1,6 @@
 from pyfecons.enums import FuelType
 from pyfecons.inputs.costing_constants import CostingConstants
-from pyfecons.units import M_USD, Ratio
+from pyfecons.units import M_USD
 
 
 def get_licensing_time(fuel_type: FuelType, constants: CostingConstants) -> float:
@@ -43,27 +43,6 @@ def compute_crf(interest_rate: float, plant_lifetime: float) -> float:
     return (i * (1 + i) ** n) / (((1 + i) ** n) - 1)
 
 
-def compute_effective_crf(
-    interest_rate: float,
-    plant_lifetime: float,
-    construction_time: float,
-    fallback_crf: float | None = None,
-) -> float:
-    """CRF adjusted for construction time: effective_crf = CRF * (1+i)^Tc.
-
-    Falls back to fallback_crf if interest_rate or plant_lifetime are invalid.
-    """
-    if interest_rate <= 0 or plant_lifetime <= 0:
-        if fallback_crf is not None:
-            return fallback_crf
-        raise ValueError(
-            f"Invalid financial parameters: interest_rate={interest_rate}, "
-            f"plant_lifetime={plant_lifetime}"
-        )
-    crf = compute_crf(interest_rate, plant_lifetime)
-    return crf * (1 + interest_rate) ** construction_time
-
-
 def levelized_annual_cost(
     annual_cost: M_USD,
     interest_rate: float,
@@ -71,26 +50,41 @@ def levelized_annual_cost(
     plant_lifetime: float,
     construction_time: float,
 ) -> M_USD:
-    """Levelize an annual cost that grows with inflation over plant lifetime.
+    """Levelized annual cost of a nominally-growing cost stream.
 
-    Computes the present value of a growing OPEX annuity, then annualizes
-    it using the effective CRF (adjusted for construction time).
+    Converts an annual cost (in today's dollars) into a level annual
+    payment over the plant lifetime, accounting for:
+    1. Inflation during construction (shifts to first-year-of-operation $)
+    2. Continued inflation over the operating lifetime (growing annuity)
+    3. Discounting at the nominal interest rate (time value of money)
+    4. Annualization via CRF
 
-    The annual_cost is treated as first-year-of-operation dollars
-    (standard NREL/IEA convention).
+    Formula:
+      A_1 = annual_cost * (1 + g)^Tc          (first-year cost)
+      PV  = A_1 * (1 - ((1+g)/(1+i))^n) / (i - g)  (growing annuity PV)
+      levelized = CRF(i, n) * PV
+
+    When i == g (L'Hopital limit): PV = A_1 * n / (1 + i)
+
+    Uses plain CRF, not effective CRF — construction-period financing
+    is handled by CAS60 (IDC).
     """
     i = interest_rate
     g = inflation_rate
     n = plant_lifetime
 
-    # Present value of growing annuity
-    if abs(i - g) < 1e-9:
-        pv = annual_cost * n / (1 + i)
-    else:
-        pv = annual_cost * (1 - ((1 + g) / (1 + i)) ** n) / (i - g)
-
-    # Annualize with construction-time-adjusted CRF
     if i <= 0 or n <= 0:
         return annual_cost  # fallback
-    effective_crf = compute_effective_crf(i, n, construction_time)
-    return M_USD(effective_crf * pv)
+
+    # Inflate to first-year-of-operation dollars
+    a1 = float(annual_cost) * (1 + g) ** construction_time
+
+    # PV of growing annuity discounted at nominal rate
+    if abs(i - g) < 1e-9:
+        pv = a1 * n / (1 + i)
+    else:
+        pv = a1 * (1 - ((1 + g) / (1 + i)) ** n) / (i - g)
+
+    # Annualize with plain CRF
+    crf = compute_crf(i, n)
+    return M_USD(crf * pv)

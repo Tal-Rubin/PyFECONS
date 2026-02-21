@@ -5,6 +5,74 @@
 
 ---
 
+## Financial Account Fixes: CAS30, CAS60, CAS90, Levelization (2026-02-20)
+
+### Bug Fix: CAS60 + CAS90 IDC Double-Counting
+- **Issue**: CAS60 used an empirical formula `p_net * idc_coeff * t_project` ($0.099/MW/yr) while
+  CAS90 used `effective_crf = CRF * (1+i)^Tc` which bakes compound-interest IDC into the
+  annualization. Both account for construction-period financing, causing double-counting.
+- **Fix**: CAS60 now uses first-principles IDC formula `f_IDC = ((1+i)^T - 1) / (i*T) - 1`
+  applied to `overnight_cost` (CAS10-50). CAS90 uses plain CRF (no construction-time adjustment).
+  Removed `compute_effective_crf` and `idc_coeff`.
+- **Impact**: At 7%/6yr, f_IDC = 0.225, giving CAS60 ~ $1,125M on $5,000M overnight cost
+  (was ~$594M from empirical formula). CAS90 decreases proportionally since it no longer
+  includes the `(1+i)^Tc` multiplier. Net LCOE change is small because the double-count removal
+  offsets the more accurate IDC.
+- **Files**: `financials.py`, `cas60_capitalized_financial.py`, `cas90_annualized_financial.py`,
+  `costing_constants.py`, `financial.py`, `mfe.py`, `ife.py`, `costing_data.py`
+
+### Bug Fix: CAS30 Indirect Costs — Coefficient Mismatch
+- **Issue**: Three power-scaled empirical sub-accounts (`field_indirect_cost_coeff=0.02`,
+  `construction_supervision_coeff=0.05`, `design_services_coeff=0.03`) with an arbitrary
+  150 MW reference power. At 1 GWe, this gave ~$230M — but coefficients were undocumented
+  and lacked physical justification.
+- **Fix**: Replaced with `indirect_fraction * CAS20 * (construction_time / reference_construction_time)`,
+  where `indirect_fraction = 0.20` and `reference_construction_time = 6 yr`. At 1 GWe with
+  CAS20 = $5,000M, this gives ~$1,000M — consistent with industry 15-25% range for indirect
+  costs on large construction projects.
+- **Files**: `cas30_capitalized_indirect_service.py`, `costing_constants.py`
+
+### Bug Fix: `levelized_annual_cost` — Incomplete Growing Annuity
+- **Issue**: Function used `effective_crf * PV` where effective_crf included `(1+i)^Tc`. Since
+  IDC is now handled in CAS60, this double-counted construction-period financing in O&M/fuel
+  levelization.
+- **Fix**: Now uses plain `CRF * PV`. The growing-annuity PV formula itself was already correct;
+  only the annualization factor changed.
+- **Files**: `financials.py`
+
+### Bug Fix: DT Licensing Time — Research Update
+- **Issue**: `licensing_time_dt = 2.5` was above the research-supported range.
+- **Fix**: Updated to `2.0` years (upper end of Part 30 1-2yr range, per DI-015).
+- **Files**: `costing_constants.py`
+
+### New Tests
+- `test_cas_financial_fixes.py` — 16 tests: CAS30 (indirect fraction scaling, reference case),
+  CAS60 (f_IDC formula, scaling, known values), CAS90 (plain CRF, no construction-time
+  dependence), `compute_effective_crf` removal verification.
+- Updated `test_financials.py` — Removed `TestComputeEffectiveCRF` class, updated
+  `TestLevelizedAnnualCost` to expect plain-CRF results, updated licensing time tests (DT: 2.0).
+
+### Modified Files
+- `pyfecons/costing/calculations/financials.py` — Removed `compute_effective_crf`, updated
+  `levelized_annual_cost` to use plain CRF
+- `pyfecons/costing/calculations/cas30_capitalized_indirect_service.py` — Rewritten with
+  `indirect_fraction * CAS20 * (t_con / t_ref)` formula
+- `pyfecons/costing/calculations/cas60_capitalized_financial.py` — Rewritten with first-principles
+  `f_IDC * overnight_cost` formula; new signature takes `overnight_cost` instead of
+  `power_table`/`cas20`/`lsa_levels`
+- `pyfecons/costing/calculations/cas90_annualized_financial.py` — Uses plain CRF instead of
+  effective CRF
+- `pyfecons/inputs/costing_constants.py` — Replaced CAS30 power-based coefficients with
+  `indirect_fraction`/`reference_construction_time`; removed `idc_coeff`; updated
+  `licensing_time_dt` from 2.5 to 2.0
+- `pyfecons/costing_data.py` — Added `overnight_cost()` method (CAS10-50 subtotal)
+- `pyfecons/costing/mfe/mfe.py` — Updated CAS30 and CAS60 call sites
+- `pyfecons/costing/ife/ife.py` — Same updates as MFE
+- `tests/test_financials.py` — Updated for new behavior
+- `tests/test_cas_financial_fixes.py` — New test file
+
+---
+
 ## CONVENTIONAL_TOKAMAK Support & Customer Test Cases (2026-02-18)
 
 ### Bug Fix: CONVENTIONAL_TOKAMAK in CAS 220101

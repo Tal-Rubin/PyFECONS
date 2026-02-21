@@ -1,14 +1,13 @@
 """Unit tests for financials module.
 
-Tests CRF, effective CRF, levelized annual cost, licensing time, and
-total project time with hand-computed expected values.
+Tests CRF, levelized annual cost, licensing time, and total project time
+with hand-computed expected values.
 """
 
 import pytest
 
 from pyfecons.costing.calculations.financials import (
     compute_crf,
-    compute_effective_crf,
     get_licensing_time,
     levelized_annual_cost,
     total_project_time,
@@ -50,63 +49,54 @@ class TestComputeCRF:
 
 
 # ---------------------------------------------------------------------------
-# compute_effective_crf
+# compute_effective_crf — REMOVED
+# IDC is now handled in CAS60 via f_IDC formula. CAS90 uses plain CRF.
 # ---------------------------------------------------------------------------
 
 
-class TestComputeEffectiveCRF:
-    def test_basic(self):
-        """effective_crf = CRF * (1+i)^Tc."""
-        eff = compute_effective_crf(0.08, 30, 6)
-        crf = compute_crf(0.08, 30)
-        assert eff == pytest.approx(crf * 1.08**6, rel=1e-10)
-
-    def test_zero_construction_time(self):
-        """Tc=0: effective_crf = CRF."""
-        eff = compute_effective_crf(0.08, 30, 0)
-        assert eff == pytest.approx(compute_crf(0.08, 30), rel=1e-10)
-
-    def test_fallback_on_zero_rate(self):
-        """interest_rate=0 with fallback returns fallback."""
-        assert compute_effective_crf(0, 30, 6, fallback_crf=0.1) == 0.1
-
-    def test_fallback_on_zero_lifetime(self):
-        assert compute_effective_crf(0.08, 0, 6, fallback_crf=0.1) == 0.1
-
-    def test_raises_without_fallback(self):
-        with pytest.raises(ValueError, match="Invalid financial parameters"):
-            compute_effective_crf(0, 30, 6)
-
-
 # ---------------------------------------------------------------------------
-# levelized_annual_cost
+# levelized_annual_cost — uses plain CRF (not effective CRF)
 # ---------------------------------------------------------------------------
 
 
 class TestLevelizedAnnualCost:
-    def test_known_value(self):
-        """Verify with hand calculation: i=0.08, g=0.025, n=30, Tc=6."""
-        annual = M_USD(100)
-        result = levelized_annual_cost(annual, 0.08, 0.025, 30, 6)
-        # PV of growing annuity: cost * (1 - ((1+g)/(1+i))^n) / (i - g)
-        ratio = (1.025 / 1.08) ** 30
-        pv = 100 * (1 - ratio) / (0.08 - 0.025)
-        eff_crf = compute_crf(0.08, 30) * 1.08**6
-        expected = eff_crf * pv
-        assert float(result) == pytest.approx(expected, rel=1e-6)
+    def test_zero_inflation_equals_annual_cost(self):
+        """With zero inflation, levelized cost equals the annual cost.
+
+        PV of flat annuity at rate i = A/CRF, so CRF * PV = A.
+        """
+        result = levelized_annual_cost(M_USD(10.0), 0.07, 0.0, 30, 6)
+        assert float(result) == pytest.approx(10.0, abs=0.01)
+
+    def test_reference_case(self):
+        """At 7% nominal, 2% inflation, 30yr life, 6yr construction.
+
+        A_1 = 100 * 1.02^6 = 112.616
+        PV = 112.616 * (1 - (1.02/1.07)^30) / (0.07 - 0.02) = 1716.5
+        CRF(0.07, 30) = 0.08059
+        levelized = 0.08059 * 1716.5 = 138.35
+        """
+        result = levelized_annual_cost(M_USD(100), 0.07, 0.02, 30, 6)
+        assert float(result) == pytest.approx(138.35, abs=1.0)
+
+    def test_higher_than_simple_inflation(self):
+        """Proper levelization should exceed the old cost * (1+g)^Tc approach.
+
+        The growing annuity over 30 years adds ~23% vs just inflating to year 1.
+        """
+        simple = 100.0 * (1.02**6)  # old approach: ~112.6
+        levelized = levelized_annual_cost(M_USD(100), 0.07, 0.02, 30, 6)
+        assert float(levelized) > simple
 
     def test_equal_rates(self):
-        """When i == g, uses pv = cost * n / (1+i)."""
+        """When i == g, uses pv = A_1 * n / (1+i). Should not crash."""
         result = levelized_annual_cost(M_USD(100), 0.05, 0.05, 30, 6)
-        pv = 100 * 30 / 1.05
-        eff_crf = compute_crf(0.05, 30) * 1.05**6
-        expected = eff_crf * pv
+        # PV = 100 * 1.05^6 * 30 / 1.05
+        a1 = 100 * 1.05**6
+        pv = a1 * 30 / 1.05
+        crf = compute_crf(0.05, 30)
+        expected = crf * pv
         assert float(result) == pytest.approx(expected, rel=1e-6)
-
-    def test_zero_rate_fallback(self):
-        """i=0: returns raw annual_cost."""
-        result = levelized_annual_cost(M_USD(100), 0, 0.025, 30, 6)
-        assert float(result) == pytest.approx(100, rel=1e-10)
 
     def test_positive(self):
         """Levelized cost should be positive for positive annual cost."""
@@ -118,6 +108,17 @@ class TestLevelizedAnnualCost:
         low = levelized_annual_cost(M_USD(100), 0.08, 0.01, 30, 6)
         high = levelized_annual_cost(M_USD(100), 0.08, 0.04, 30, 6)
         assert float(high) > float(low)
+
+    def test_scales_linearly(self):
+        """Doubling annual cost should double the levelized result."""
+        low = levelized_annual_cost(M_USD(50), 0.07, 0.02, 30, 6)
+        high = levelized_annual_cost(M_USD(100), 0.07, 0.02, 30, 6)
+        assert float(high) / float(low) == pytest.approx(2.0, rel=1e-10)
+
+    def test_zero_rate_fallback(self):
+        """i=0: returns raw annual_cost."""
+        result = levelized_annual_cost(M_USD(100), 0, 0.025, 30, 6)
+        assert float(result) == pytest.approx(100, rel=1e-10)
 
 
 # ---------------------------------------------------------------------------
@@ -131,7 +132,7 @@ class TestGetLicensingTime:
         self.constants = CostingConstants()
 
     def test_dt(self):
-        assert get_licensing_time(FuelType.DT, self.constants) == 2.5
+        assert get_licensing_time(FuelType.DT, self.constants) == 2.0
 
     def test_dd(self):
         assert get_licensing_time(FuelType.DD, self.constants) == 1.5
@@ -163,7 +164,7 @@ class TestTotalProjectTime:
 
     def test_foak_dt(self):
         """FOAK DT: construction + licensing."""
-        assert total_project_time(6, FuelType.DT, self.constants, noak=False) == 6 + 2.5
+        assert total_project_time(6, FuelType.DT, self.constants, noak=False) == 6 + 2.0
 
     def test_noak_dt(self):
         """NOAK: construction only."""

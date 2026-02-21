@@ -176,8 +176,6 @@ def GenerateCostingData(inputs: AllInputs) -> CostingData:
     data.cas20 = cas20_total_costs(data.cas2x_total_cost())
     data.cas30 = cas30_capitalized_indirect_service_costs(
         inputs.basic,
-        inputs.lsa_levels,
-        data.power_table,
         data.cas20,
         inputs.costing_constants,
     )
@@ -191,9 +189,7 @@ def GenerateCostingData(inputs: AllInputs) -> CostingData:
     data.cas60 = cas60_capitalized_financial_costs(
         inputs.basic,
         inputs.financial,
-        inputs.lsa_levels,
-        data.power_table,
-        data.cas20,
+        data.overnight_cost(),
         inputs.costing_constants,
     )
     data.cas70 = cas70_annualized_om_costs(
